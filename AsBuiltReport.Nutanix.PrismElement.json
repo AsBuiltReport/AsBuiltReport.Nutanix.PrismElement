@@ -7,7 +7,9 @@
     "Options": {},
     "InfoLevel": {
         "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Comprehensive",
-        "Hardware": 2,
+        "Cluster": 1,
+        "System": 2,
+        "Hosts": 2,
         "Storage": 2,
         "VM": 2,
         "DataProtection": 2

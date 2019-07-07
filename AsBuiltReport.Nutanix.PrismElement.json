@@ -1,0 +1,40 @@
+{
+    "Report": {
+        "Name": "Nutanix Prism As Built Report",
+        "Version": "1.0",
+        "Status": "Released"
+    },
+    "Options": {},
+    "InfoLevel": {
+        "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Comprehensive",
+        "Hardware": 2,
+        "Storage": 2,
+        "VM": 2,
+        "DataProtection": 2
+    },
+    "HealthCheck": {
+        "Cluster": {
+            "Timezone": "Australia/Melbourne",
+            "DataResiliency": true
+        },
+        "CVM": {
+            "PowerState": true
+        },
+        "System": {
+            "LicenseType": "Pro"
+        },
+        "Hardware": {
+            "DiskStatus": true,
+            "DiskMode": true
+        },
+        "Storage": {
+            "Compression": false,
+            "CacheDedupe": false,
+            "CapacityDedupe": false,
+            "ErasureCoding": false
+        },
+        "VM": {
+            "PowerState": true
+        }
+    }
+}

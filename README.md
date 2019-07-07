@@ -62,7 +62,9 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 
 | Schema | Sub-Schema | Default Setting |
 | ------ | ---------- | --------------- |
-| InfoLevel | Hardware | 2
+| InfoLevel | Cluster | 1
+| InfoLevel | System | 2
+| InfoLevel | Hosts | 2
 | InfoLevel | Storage | 2
 | InfoLevel | VM | 2
 | InfoLevel | DataProtection | 2

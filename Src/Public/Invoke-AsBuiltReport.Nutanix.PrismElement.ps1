@@ -278,6 +278,35 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $Licensing | Where-Object { $_.'License' -ne $Healthcheck.System.License } | Set-Style -Style Warning -Property 'License'
                             }
                             $Licensing | Table -Name 'Licensing' -ColumnWidths 50, 50
+
+                            if ($InfoLevel.System -gt 2) {
+                                BlankLine
+                                #region Licensing Features
+                                Section -Style Heading4 'Features' {
+                                    $NtnxLicenseAllowanceMap = $NtnxLicense.allowanceMap
+                                    foreach ($NtnxLicenseType in $NtnxLicenseAllowanceMap[0].PSObject.Properties) {
+                                        Set-Variable -Name ('__{0}' -f $NtnxLicenseType.Name) -Value ($NtnxLicenseAllowanceMap | Select-Object -ExpandProperty $($NtnxLicenseType.Name))
+                                    }
+                                    
+                                    $NtnxLicenseValues = Get-Variable -Name '__*'
+                                    $LicensingFeatures = foreach ($NtnxLicenseValue in $NtnxLicenseValues.value) {
+                                        [PSCustomObject]@{
+                                            'Feature' = $NtnxLicenseValue.displayname
+                                            'Permitted' = Switch ($NtnxLicenseValue.allowancesType) {
+                                                'BOOLEAN' {
+                                                    Switch ($NtnxLicenseValue.BoolValue.BoolValue) {
+                                                        $true { 'Yes' }
+                                                        $false { 'No' }
+                                                    } 
+                                                }
+                                                'INTEGER_LIST' { ($NtnxLicenseValue.intValues).intValue }
+                                            }
+                                        }
+                                    }
+                                    $LicensingFeatures | Sort-Object 'Feature' | Table -Name 'Licensing Features' -ColumnWidths 50, 50
+                                }
+                                #endregion Licensing Features
+                            }
                         }
                     }
                     #endregion Licensing

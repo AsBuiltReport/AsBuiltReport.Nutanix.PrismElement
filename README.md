@@ -58,10 +58,22 @@ The **Report** sub-schema provides configuration of the Nutanix Prism report inf
 | Report | Status | The report release status
 
 ### InfoLevel
-The **InfoLevel** sub-schema allows configuration of each section of the report at a granular level. The following sections can be set
+The **InfoLevel** sub-schema allows configuration of each section of the report at a granular level. 
+
+There are 4 levels (0-3) of detail granularity for each section as follows;
+
+| Setting | InfoLevel | Description |
+| :-------: | ---- | ----------- |
+| 0 | Disabled | does not collect or display any information
+| 1 | Summary | provides summarised information for a collection of objects
+| 2 | Detailed | provides detailed information for a collection of objects
+| 3 | Comprehensive | provides comprehensive information for individual objects
+
+
+The following sections can be set
 
 | Schema | Sub-Schema | Default Setting |
-| ------ | ---------- | --------------- |
+| ------ | ---------- | :---------------: |
 | InfoLevel | Cluster | 1
 | InfoLevel | System | 2
 | InfoLevel | Hosts | 2
@@ -69,14 +81,44 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 | InfoLevel | VM | 2
 | InfoLevel | DataProtection | 2
 
-There are 4 levels (0-3) of detail granularity for each section as follows;
+The following table outlines the information which will be shown based on the InfoLevel set
 
-| Setting | InfoLevel | Description |
-| ------- | ---- | ----------- |
-| 0 | Disabled | does not collect or display any information
-| 1 | Summary | provides summarised information for a collection of objects
-| 2 | Detailed | provides detailed information for a collection of objects
-| 3 | Comprehensive | provides comprehensive information for individual objects
+| InfoLevel | 1 | 2 | 3
+| :--- | :---: | :---: | :---:
+| **Cluster** |  |  |
+| Controller VMs | x | x | x
+| Hardware | x | x | x
+| Network | x | x | x
+| **System** | | |
+| Alerts | x | x | x
+| Authentication | x | x | x
+| Filesystem Whitelists | x | x | x
+| Licensing | x | x | x
+| Licensing Features | | | x
+| SMTP | x | x | x
+| SNMP | x | x | x
+| Syslog | x | x | x
+| **Hosts** | | |
+| Host Summary | x | | |
+| Host Hardware  | | x | x
+| Host Network | | x | x
+| Host Disks (Detailed) | | x | 
+| Host Disks (Comprehensive) | | | x
+| **Storage** | | |
+| Storage Pools | x | x | x
+| Containers (Detailed) | x | x | 
+| Containers (Comprehensive)| x | x | x
+| **Virtual Machines** | | |
+| Virtual Machines (Detailed) | x | x |
+| Virtual Machines (Comprehensive) | | | x
+| **Data Protection** | | |
+| Protection Domains | x | x | x
+| Protection Domain Replication | x | x | x
+| Protection Domain Snapshots | x | x | x
+| Unprotected VMs | x | x | x
+| Remote Sites | x | x | x
+
+
 
 ## Known Issues
 - Error message _"Unable to determine the identity of the domain"_ when saving a report. 

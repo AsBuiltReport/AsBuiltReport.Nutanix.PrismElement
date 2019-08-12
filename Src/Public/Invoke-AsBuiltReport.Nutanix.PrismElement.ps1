@@ -23,7 +23,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
 
     # Import JSON Configuration for Options and InfoLevel
     $InfoLevel = $ReportConfig.InfoLevel
-    $Options = $ReportConfig.Options
+
+    $TextInfo = (Get-Culture).TextInfo
 
     # If custom style not set, use default style
     if (!$StylePath) {
@@ -115,11 +116,11 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'all_hdd' { 'All HDD' }
                                     'mixed' { 'Hybrid' }
                                 } 
-                                'Hypervisor Type' = ($NtnxCluster.hypervisor_types).TrimStart('k') -join ', '
+                                'Hypervisor Types' = ($NtnxCluster.hypervisor_types).TrimStart('k').Replace('Kvm', 'AHV').Replace('VMware', 'ESXi') -join ', '
                                 'Number of Nodes' = $NtnxCluster.num_nodes
                                 'Number of Blocks' = ($NtnxCluster.block_serials | Select-Object -Unique).count
                                 'Block Serial(s)' = ($NtnxCluster.block_serials | Sort-Object) -join ', ' 
-                                'Fault Tolerance Domain Type' = $NtnxCluster.fault_tolerance_domain_type
+                                'Fault Tolerance Domain Type' = $TextInfo.ToTitleCase(($NtnxCluster.fault_tolerance_domain_type.ToLower()))
                                 'Data Resiliency Status' = if ($NtnxFtDomainStatus.component_fault_tolerance_status.static_configuration.number_of_failures_tolerable -gt 0) {
                                     "OK"
                                 } else {
@@ -159,7 +160,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $ControllerVMs = foreach ($NtnxCVM in $NtnxCVMs) {
                                 [PSCustomObject]@{
                                     'Name' = $NtnxCVM.vmName 
-                                    'Power State' = $NtnxCVM.powerState 
+                                    'Power State' = $TextInfo.ToTitleCase($NtnxCVM.powerState)
                                     'Host' = $NtnxCVM.hostName 
                                     'IP Address' = $NtnxCVM.ipAddresses[0] 
                                     'CPUs' = $NtnxCVM.numVCPUs 
@@ -180,13 +181,16 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #region System Section
             if ($InfoLevel.System -gt 0) {
                 Section -Style Heading2 'System' {
-                    #region Filesystem Whitelists
+                    #region Global Filesystem Whitelists
                     if ($NtnxNfsWhitelist) {
-                        Section -Style Heading3 'Filesystem Whitelists' {
-                            $NtnxNfsWhitelist | Table -Name 'Filesystem Whitelists'
+                        Section -Style Heading3 'Global Filesystem Whitelists' {
+                            $NtnxNfsWhitelists = [PSCustomObject]@{
+                                'Global Filesystem Whitelists' = $NtnxNfsWhitelist -join [Environment]::NewLine
+                            }
+                            $NtnxNfsWhitelists | Table -List -Name 'Filesystem Whitelists' -ColumnWidths 50, 50
                         }
                     }
-                    #endregion Filesystem Whitelists
+                    #endregion Global Filesystem Whitelists
 
                     #region Authentication
                     if ($NtnxAuthConfig) {
@@ -195,9 +199,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Name' = $NtnxAuthConfig.directory_list.name 
                                 'Domain' = $NtnxAuthConfig.directory_list.domain 
                                 'URL' = $NtnxAuthConfig.directory_list.directory_url 
-                                'Directory Type' = $NtnxAuthConfig.directory_list.directory_type
+                                'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower())
                                 'Connection Type' = $NtnxAuthConfig.directory_list.connection_type 
-                                'Group Search Type' = $NtnxAuthConfig.directory_list.group_search_type
+                                'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower())
                             }
                             $AuthConfigDirectory | Table -List -Name 'Authentication' -ColumnWidths 50, 50
                         }
@@ -211,14 +215,14 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Address' = $NtnxSmtpConfig.address 
                                 'Port' = $NtnxSmtpConfig.port 
                                 'Username' = Switch ($NtnxSmtpConfig.username) {
-                                    $null { "none" }
+                                    $null { "None" }
                                     default { $NtnxSmtpConfig.username }
                                 }
                                 'Password' = Switch ($NtnxSmtpConfig.password) {
-                                    $null { "none" }
+                                    $null { "None" }
                                     default { $NtnxSmtpConfig.password }
                                 }
-                                'Secure Mode' = ($NtnxSmtpConfig.secure_mode).ToLower()
+                                'Secure Mode' = $TextInfo.ToTitleCase(($NtnxSmtpConfig.secure_mode).ToLower())
                                 'From Email Address' = $NtnxSmtpConfig.from_email_address
                             }
                             $SmtpConfig | Table -List -Name 'SMTP Server' -ColumnWidths 50, 50
@@ -344,7 +348,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 Section -Style Heading4 'Hardware' {
                                     $NtnxHostConfig = [PSCustomObject]@{
                                         'Host Name' = $NtnxHost.name
-                                        'Host Type' = $NtnxHost.host_type
+                                        'Host Type' = $TextInfo.ToTitleCase(($NtnxHost.host_type).ToLower())
                                         'Node Serial' = $NtnxHost.serial 
                                         'Block Serial' = $NtnxHost.block_serial 
                                         'Block Model' = $NtnxHost.block_model_name 
@@ -401,7 +405,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                     $true { 'Present' }
                                                     $false { 'Not Present' } 
                                                 }
-                                                'Status' = $NtnxDisk.disk_status
+                                                'Status' = $TextInfo.ToTitleCase(($NtnxDisk.disk_status).ToLower())
                                                 'Mode' = Switch ($NtnxDisk.online) {
                                                     $true { 'Online' }
                                                     $false { 'Offline' }  
@@ -487,16 +491,16 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     #ToDo: 'Protection Domain'
                                     #ToDo: 'Datastore'
                                     'Compression' = Switch ($NtnxContainer.compression_enabled) {
-                                        $true { 'on' }
-                                        $false { 'off' }
+                                        $true { 'On' }
+                                        $false { 'Off' }
                                     }
                                     'Compression Delay' = Switch ($NtnxContainer.compression_delay_in_secs) {
                                         $null { '' }
                                         default { "$(($NtnxContainer.compression_delay_in_secs)*60) mins" }
                                     }
-                                    'Cache Deduplication' = $NtnxContainer.finger_print_on_write
-                                    'Capacity Deduplication' = ($NtnxContainer.on_disk_dedup).ToLower() 
-                                    'Erasure Coding' = $NtnxContainer.erasure_code
+                                    'Cache Deduplication' = $TextInfo.ToTitleCase($NtnxContainer.finger_print_on_write)
+                                    'Capacity Deduplication' = $TextInfo.ToTitleCase(($NtnxContainer.on_disk_dedup).ToLower())
+                                    'Erasure Coding' = $TextInfo.ToTitleCase($NtnxContainer.erasure_code)
                                     'Free Capacity (Logical) TiB' = [math]::Round(($NtnxContainer.usage_stats.'storage.user_unreserved_free_bytes') / 1099511627776, 2)
                                     'Used Capacity TiB' = [math]::Round(((($NtnxContainer.usage_stats.'storage.user_capacity_bytes') - ($NtnxContainer.usage_stats.'storage.reserved_capacity_bytes')) - ($NtnxContainer.usage_stats.'storage.user_unreserved_free_bytes')) / 1099511627776, 2)
                                     'Maximum Capacity TiB' = [math]::Round((($NtnxContainer.usage_stats.'storage.user_capacity_bytes') - ($NtnxContainer.usage_stats.'storage.reserved_capacity_bytes')) / 1099511627776, 2)
@@ -565,7 +569,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     $NtnxVMConfigs = foreach ($NtnxVM in $NtnxVirtualMachines) {
                         [PSCustomObject]@{
                             'VM' = $NtnxVM.vmName 
-                            'Power State' = $NtnxVM.powerState 
+                            'Power State' = $TextInfo.ToTitleCase($NtnxVM.powerState) 
                             'Operating System' = $NtnxVM.guestOperatingSystem 
                             'IP Addresses' = $NtnxVM.ipAddresses -join ', '
                             'vCPUs' = $NtnxVM.numVCpus
@@ -592,7 +596,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #endregion Virtual Machines Section
 
             #region Data Protection Section
-            if ($InfoLevel.DataProtection -gt 0) {
+            if (($InfoLevel.DataProtection -gt 0) -and ($NtnxProtectionDomains -or $NtnxRemoteSites)) {
                 Section -Style Heading2 'Data Protection' {
                     #region Protection Domains
                     if ($NtnxProtectionDomains) {
@@ -655,7 +659,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $UnprotectedVMs = foreach ($NtnxUnprotectedVM in $NtnxUnprotectedVMs) {
                                 [PSCustomObject]@{
                                     'VM Name' = $NtnxUnprotectedVM.vmName 
-                                    'Power State' = $NtnxUnprotectedVM.powerState
+                                    'Power State' = $TextInfo.ToTitleCase($NtnxUnprotectedVM.powerState)
                                     'Operating System' = $NtnxUnprotectedVM.guestOperatingSystem 
                                     'CPUs' = $NtnxUnprotectedVM.numVCPUs 
                                     'NICs' = $NtnxUnprotectedVM.numNetworkAdapters 
@@ -674,24 +678,27 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $RemoteSites = foreach ($NtnxRemoteSite in $NtnxRemoteSites) {
                                 [PSCustomObject]@{
                                     'Name' = $NtnxRemoteSite.name 
-                                    'Capabilities' = ($NtnxRemoteSite.capabilities | Sort-Object) -join ', ' 
+                                    'Capabilities' = ($TextInfo.ToTitleCase(($NtnxRemoteSite.capabilities).ToLower()) | Sort-Object) -join ', ' 
                                     'Remote Addresses' = "$(($NtnxRemoteSite.remoteIpPorts | Get-Member -MemberType NoteProperty).Name):2020"
-                                    'Metro Ready' = $NtnxRemoteSite.metroReady
+                                    'Metro Ready' = Switch ($NtnxRemoteSite.metroReady) {
+                                        $true { 'Yes' }
+                                        $false { 'No' }
+                                    }
                                     'Use SSH Tunnel' = Switch ($NtnxRemoteSite.sshEnabled) {
-                                        $true { 'yes' }
-                                        $false { 'no' }
+                                        $true { 'Yes' }
+                                        $false { 'No' }
                                     }
                                     'Compress On Wire' = Switch ($NtnxRemoteSite.compressionEnabled) {
-                                        $true { 'on' }
-                                        $false { 'off' }
+                                        $true { 'On' }
+                                        $false { 'Off' }
                                     }
                                     'Enable Proxy' = Switch ($NtnxRemoteSite.proxyEnabled) {
-                                        $true { 'on' }
-                                        $false { 'off' }
+                                        $true { 'On' }
+                                        $false { 'Off' }
                                     }
                                     'Bandwidth Throttling' = Switch ($NtnxRemoteSite.bandwidthPolicyEnabled) {
-                                        $true { 'on' }
-                                        $false { 'off' }
+                                        $true { 'On' }
+                                        $false { 'Off' }
                                     }                    
                                 }
                             }

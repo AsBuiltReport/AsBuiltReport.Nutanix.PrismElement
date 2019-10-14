@@ -425,7 +425,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                 }
                                             }
                                         } else {
-                                            $NtnxHostDisks | Table -Name 'Host Disk Specifications' -Columns 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Status', 'Mode'
+                                            $NtnxHostDisks | Table -Name 'Host Disk Specifications' -Columns 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
                                         }
                                     }
                                 }

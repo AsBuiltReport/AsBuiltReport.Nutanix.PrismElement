@@ -24,14 +24,20 @@
 # Getting Started
 Below are the instructions on how to install, configure and generate a Nutanix Prism As Built report.
 
+## Supported AOS Versions
+The Nutanix Prism Element As Built Report supports the following AOS versions;
+- AOS 5.5
+- AOS 5.10
+- AOS 5.15
+
 ## Pre-requisites
 None
 
 ### Module Installation
 
-Open a Windows PowerShell terminal window and install each of the required modules as follows;
+Open a Windows PowerShell terminal window and install the required modules as follows;
 ```powershell
-install-module AsBuiltReport
+install-module AsBuiltReport.Nutanix.PrismElement
 ```
 
 ## Configuration
@@ -81,54 +87,22 @@ The following sections can be set
 | InfoLevel | VM | 2
 | InfoLevel | DataProtection | 2
 
-The following table outlines the information which will be shown based on the InfoLevel set
+## Examples 
 
-| InfoLevel | 1 | 2 | 3
-| :--- | :---: | :---: | :---:
-| **Cluster** |  |  |
-| Controller VMs | x | x | x
-| Hardware | x | x | x
-| Network | x | x | x
-| **System** | | |
-| Alerts | x | x | x
-| Authentication | x | x | x
-| Filesystem Whitelists | x | x | x
-| Licensing | x | x | x
-| Licensing Features | | | x
-| SMTP | x | x | x
-| SNMP | x | x | x
-| Syslog | x | x | x
-| **Hosts** | | |
-| Host Summary | x | | |
-| Host Hardware  | | x | x
-| Host Network | | x | x
-| Host Disks (Detailed) | | x | 
-| Host Disks (Comprehensive) | | | x
-| **Storage** | | |
-| Storage Pools | x | x | x
-| Containers (Detailed) | x | x | 
-| Containers (Comprehensive)| x | x | x
-| **Virtual Machines** | | |
-| Virtual Machines (Detailed) | x | x |
-| Virtual Machines (Comprehensive) | | | x
-| **Data Protection** | | |
-| Protection Domains | x | x | x
-| Protection Domain Replication | x | x | x
-| Protection Domain Snapshots | x | x | x
-| Unprotected VMs | x | x | x
-| Remote Sites | x | x | x
+```powershell
+# Generate a Nutanix Prism Element As Built Report for Nutanix cluster '172.16.30.110' using specified credentials. Export report to HTML & DOCX formats. Use default report style. Append timestamp to report filename. Save reports to 'C:\Users\Tim\Documents'
+PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110' -Username 'admin' -Password 'nutanix/4u' -Format Html,Word -OutputPath 'C:\Users\Tim\Documents' -Timestamp
 
+# Generate a Nutanix Prism Element As Built Report for Nutanix cluster '172.16.30.110' using specified credentials and report configuration file. Export report to Text, HTML & DOCX formats. Use default report style. Save reports to 'C:\Users\Tim\Documents'. Display Verbose messages to the console.
+PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110' -Username 'admin' -Password 'nutanix/4u' -Format Text,Html,Word -OutputPath 'C:\Users\Tim\Documents' -Verbose
 
+# Generate a Nutanix Prism Element As Built Report for Nutanix cluster '172.16.30.110' using stored credentials. Export report to HTML & Text formats. Use default report style. Highlight environment issues within the report. Save reports to 'C:\Users\Tim\Documents'.
+PS C:\> $Creds = Get-Credential
+PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110' -Credential $Creds -Format Html,Text -OutputPath 'C:\Users\Tim\Documents' -EnableHealthCheck
 
-## Known Issues
-- Error message _"Unable to determine the identity of the domain"_ when saving a report. 
-  - Issue relates to [Isolated Storage](http://rekiwi.blogspot.com/2008/12/unable-to-determine-identity-of-domain.html) and occurs when generating large reports. 
-  - A workaround to this issue is to run the report using PowerShell ISE.
-- In HTML documents, word-wrap of table cell contents is not working, causing the following issues;
-  - Cell contents may overflow table columns
-  - Tables may overflow page margin
-  - [PScribo Issue #83](https://github.com/iainbrighton/PScribo/issues/83)
+# Generate a single Nutanix Prism Element As Built Report for Nutanix clusters '172.16.30.110' and '172.16.30.130' using specified credentials. Report exports to WORD format by default. Apply custom style to the report. Reports are saved to the user profile folder by default.
+PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110','172.16.30.130' -Username 'admin' -Password 'nutanix/4u' -StylePath 'C:\Scripts\Styles\MyCustomStyle.ps1'
 
-- In Word documents, some tables are not sized proportionately. To prevent cell overflow issues in HTML documents, most tables are auto-sized, this causes some tables to be out of proportion.
-    
-    - [PScribo Issue #83](https://github.com/iainbrighton/PScribo/issues/83)
+# Generate a Nutanix Prism Element As Built Report for Nutanix cluster '172.16.30.110' using specified credentials. Export report to HTML & DOCX formats. Use default report style. Reports are saved to the user profile folder by default. Attach and send reports via e-mail.
+PS C:\> New-AsBuiltReport -Report VMware.vSphere -Target 'vcenter-01.corp.local' -Username 'admin' -Password 'nutanix/4u' -Format Html,Word -OutputPath 'C:\Users\Tim\Documents' -SendEmail
+```

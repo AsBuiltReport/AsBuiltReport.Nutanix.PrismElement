@@ -15,7 +15,7 @@
     },
     "HealthCheck": {
         "Cluster": {
-            "Timezone": "Australia/Melbourne",
+            "Timezone": "UTC",
             "DataResiliency": true
         },
         "CVM": {

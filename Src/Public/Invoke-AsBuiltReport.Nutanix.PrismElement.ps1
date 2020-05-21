@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/XML/Text formats using PScribo.
     .NOTES
-        Version:        0.1.0
+        Version:        1.0.0
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -79,9 +79,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         $NtnxAlertsConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/alerts/configuration/') -Headers $Header
         $NtnxAuthConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/authconfig/') -Headers $Header
         $NtnxContainers = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/storage_containers/') -Headers $Header).entities
-        $NtnxDatastores = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/storage_containers/datastores/') -Headers $Header
         $NtnxCluster = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/') -Headers $Header
-        $NtnxWitness = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/metro_witness/') -Headers $Header
+        #$NtnxWitness = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/metro_witness/') -Headers $Header
         $NtnxSmtpConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/smtp/') -Headers $Header
         $NtnxSnmpConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/snmp/') -Headers $Header
         $NtnxFtStatus = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/domain_fault_tolerance_status/') -Headers $Header
@@ -195,21 +194,31 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     #region Authentication
                     if ($NtnxAuthConfig) {
                         Section -Style Heading3 'Authentication' {
-                            $AuthConfigDirectory = [PSCustomObject]@{
-                                'Name' = $NtnxAuthConfig.directory_list.name 
-                                'Domain' = $NtnxAuthConfig.directory_list.domain 
-                                'URL' = $NtnxAuthConfig.directory_list.directory_url 
-                                'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower())
-                                'Connection Type' = $NtnxAuthConfig.directory_list.connection_type 
-                                'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower())
+                            Section -Style Heading4 'Authentication Types' {
+                                $AuthenticationTypes = [PSCustomObject]@{
+                                    'Authentication Types' = $TextInfo.ToTitleCase(($NtnxAuthConfig.auth_type_list.Replace('_', ' ') -join ', ').ToLower())
+                                }
+                                $AuthenticationTypes | Table -List -Name 'Authentication Types' -ColumnWidths 50, 50
                             }
-                            $AuthConfigDirectory | Table -List -Name 'Authentication' -ColumnWidths 50, 50
+                            if ($NtnxAuthConfig.directory_list) {
+                                Section -Style Heading4 'Directory List' {
+                                    $DirectoryList = [PSCustomObject]@{
+                                        'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower())
+                                        'Directory Name' = $NtnxAuthConfig.directory_list.name
+                                        'Domain' = $NtnxAuthConfig.directory_list.domain
+                                        'URL' = $NtnxAuthConfig.directory_list.directory_url
+                                        'Connection Type' = $NtnxAuthConfig.directory_list.connection_type
+                                        'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower())
+                                    }
+                                    $DirectoryList | Table -List -Name 'Directory List' -ColumnWidths 50, 50
+                                }
+                            }
                         }
                     }
                     #endregion Authentication
 
                     #region SMTP
-                    if ($NtnxSmtpConfig) {
+                    if ($NtnxSmtpConfig.Address) {
                         Section -Style Heading3 'SMTP Server' {
                             $SmtpConfig = [PSCustomObject]@{
                                 'Address' = $NtnxSmtpConfig.address 
@@ -235,12 +244,12 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Alert Email Configuration' {
                             $AlertConfig = [PSCustomObject]@{
                                 'Email Every Alert' = Switch ($NtnxAlertsConfig.enable) {
-                                    $true { 'yes' }
-                                    $false { 'no' }
+                                    $true { 'Yes' }
+                                    $false { 'No' }
                                 } 
                                 'Email Daily Alert' = Switch ($NtnxAlertsConfig.enable_email_digest) {
-                                    $true { 'yes' }
-                                    $false { 'no' }
+                                    $true { 'Yes' }
+                                    $false { 'No' }
                                 } 
                                 'Nutanix Support Email' = $NtnxAlertsConfig.default_nutanix_email 
                                 'Additional Email Recipients' = $NtnxAlertsConfig.email_contact_list -join ', '                         
@@ -251,13 +260,22 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     #endregion Alerts Configuration
 
                     #region SNMP Configuration
-                    if ($NtnxSnmpConfig) {
+                    if ($NtnxSnmpConfig.Enabled) {
                         Section -Style Heading3 'SNMP Configuration' {
                             $SnmpConfig = [PSCustomObject]@{
-                                'Enabled' = $NtnxSnmpConfig.enabled               
-                                'Transports' = $NtnxSnmpConfig.snmp_transports -join ','
-                                'Users' = $NtnxSnmpConfig.snmp_users -join ','
-                                'Traps' = $NtnxSnmpConfig.snmp_traps -join ','       
+                                'Enabled' = $NtnxSnmpConfig.enabled              
+                                'Transports' = Switch ($NtnxSnmpConfig.snmp_transports) {
+                                    $null { 'Not configured' }
+                                    default { $NtnxSnmpConfig.snmp_transports -join ',' }
+                                }
+                                'Users' = Switch ($NtnxSnmpConfig.snmp_users) {
+                                    $null { 'Not configured' }
+                                    default { $NtnxSnmpConfig.snmp_users -join ',' }
+                                }
+                                'Traps' = Switch ($NtnxSnmpConfig.snmp_traps) {
+                                    $null { 'Not configured' }
+                                    default { $NtnxSnmpConfig.snmp_traps -join ',' }
+                                }    
                             }
                             $SnmpConfig | Table -List -Name 'SNMP Configuration' -ColumnWidths 50, 50
                         }
@@ -285,7 +303,6 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $Licensing | Table -Name 'Licensing' -ColumnWidths 50, 50
 
                             if ($InfoLevel.System -gt 2) {
-                                BlankLine
                                 #region Licensing Features
                                 Section -Style Heading4 'Features' {
                                     $NtnxLicenseAllowanceMap = $NtnxLicense.allowanceMap
@@ -538,29 +555,31 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         }
                     }
                     #endregion Containers
-                    <#
                     #region Datastores
-                    if (($NtnxDatastores) -and ($NtnxCluster.hypervisor_types -eq 'kVMware')) {
-                        Section -Style Heading3 'Datastores' {
-                            $Datastores = foreach ($NtnxDatastore in $NtnxDatastores) {
-                                [PSCustomObject]@{
-                                    'Datastore' = $NtnxDatastore.datastore_name
-                                    'Container' = $NtnxDatastore.storage_container_name
-                                    'Free Capacity TiB' = [math]::Round(($NtnxDatastore.free_space) / 1099511627776, 2)
-                                    'Used Capacity TiB' = [math]::Round((($NtnxDatastore.capacity) - ($NtnxDatastore.free_space)) / 1099511627776, 2)
-                                    'Maximum Capacity TiB' = [math]::Round(($NtnxDatastore.capacity) / 1099511627776, 2)
-                                    'VMs' = ($NtnxDatastore.vm_names).Count
-                                } 
+                    if ($NtnxCluster.hypervisor_types -eq 'kVMware') {
+                        $NtnxDatastores = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/storage_containers/datastores/') -Headers $Header
+                        if ($NtnxDatastores) {
+                            Section -Style Heading3 'Datastores' {
+                                $Datastores = foreach ($NtnxDatastore in $NtnxDatastores) {
+                                    [PSCustomObject]@{
+                                        'Datastore' = $NtnxDatastore.datastore_name
+                                        'Container' = $NtnxDatastore.storage_container_name
+                                        'Free Capacity TiB' = [math]::Round(($NtnxDatastore.free_space) / 1099511627776, 2)
+                                        'Used Capacity TiB' = [math]::Round((($NtnxDatastore.capacity) - ($NtnxDatastore.free_space)) / 1099511627776, 2)
+                                        'Maximum Capacity TiB' = [math]::Round(($NtnxDatastore.capacity) / 1099511627776, 2)
+                                        'VMs' = ($NtnxDatastore.vm_names).Count
+                                    } 
+                                }
+                                $Datastores | Sort-Object 'Datastore' | Table -Name 'NFS Datastores'
                             }
-                            $Datastores | Sort-Object 'Datastore' | Table -Name 'NFS Datastores'
                         }
                     }
                     #endregion Datastores
-                    #>
                 }
             }
             #endregion Storage Section
 
+            <#
             #region Virtual Machines Section
             if (($InfoLevel.VM -gt 0) -and ($NtnxVMs)) {
                 # Excludes CVMs and VMs not running on a container
@@ -594,6 +613,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                 }
             }
             #endregion Virtual Machines Section
+            #>
 
             #region Data Protection Section
             if (($InfoLevel.DataProtection -gt 0) -and ($NtnxProtectionDomains -or $NtnxRemoteSites)) {

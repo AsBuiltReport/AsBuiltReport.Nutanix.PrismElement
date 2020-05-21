@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/XML/Text formats using PScribo.
     .NOTES
-        Version:        1.0.0
+        Version:        1.0.1
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -448,7 +448,6 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 }
                                 #endregion Host Disks
 
-                                <#
                                 #region Host Datastores
                                 if (($NtnxDatastores) -and ($NtnxCluster.hypervisor_types -eq 'kVMware')) {
                                     Section -Style Heading4 'Datastores' {
@@ -467,7 +466,6 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     }
                                 }
                                 #endregion Host Datastores
-                                #>
                             }
                             #endregion Host Information
                         }
@@ -579,7 +577,6 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             }
             #endregion Storage Section
 
-            <#
             #region Virtual Machines Section
             if (($InfoLevel.VM -gt 0) -and ($NtnxVMs)) {
                 # Excludes CVMs and VMs not running on a container
@@ -613,7 +610,6 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                 }
             }
             #endregion Virtual Machines Section
-            #>
 
             #region Data Protection Section
             if (($InfoLevel.DataProtection -gt 0) -and ($NtnxProtectionDomains -or $NtnxRemoteSites)) {

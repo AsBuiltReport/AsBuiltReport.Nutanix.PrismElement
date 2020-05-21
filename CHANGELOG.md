@@ -1,6 +1,6 @@
 # Nutanix Prism Element As Built Report Changelog
 
-## [Unreleased]
+## [1.0.0] 2020-05-21
 ### Fixed
 - Compatibility with AOS 5.10 and later
 

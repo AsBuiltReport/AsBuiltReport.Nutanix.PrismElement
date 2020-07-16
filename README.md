@@ -52,8 +52,10 @@ Each of the following modules will be automatically installed by following the [
 
 These modules may also be installed individually.
 
-- [PScribo](https://www.powershellgallery.com/packages/PScribo/) (Minimum version 0.9.0)
-- [AsBuiltReport.Core Module](https://www.powershellgallery.com/packages/AsBuiltReport.Core/)
+| Module Name        | Minimum Required Version |                          PS Gallery                           |                                   GitHub                                    |
+|--------------------|:------------------------:|:---------------------------------------------------------------------:|:---------------------------------------------------------------------------:|
+| PScribo            |          0.9.0           |      [Link](https://www.powershellgallery.com/packages/PScribo)       |         [Link](https://github.com/iainbrighton/PScribo/tree/master)         |
+| AsBuiltReport.Core |          1.0.4           | [Link](https://www.powershellgallery.com/packages/AsBuiltReport.Core) | [Link](https://github.com/AsBuiltReport/AsBuiltReport.Core/releases/latest) |
 
 ### :closed_lock_with_key: Required Privileges
 A user with Prism `Cluster Admin` privileges is required to generate a Nutanix Prism Element As Built Report.

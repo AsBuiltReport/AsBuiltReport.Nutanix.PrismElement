@@ -34,17 +34,33 @@ Sample Prism Element As Built report with health checks, using default report st
 # :beginner: Getting Started
 Below are the instructions on how to install, configure and generate a Nutanix Prism As Built report.
 
-## :hamburger: Supported Prism / AOS Versions
+## :hamburger: Supported Versions
+### **Prism / AOS**
 The Nutanix Prism Element As Built Report supports the following AOS versions;
 - AOS 5.x
 
+### **PowerShell**
+This report is compatible with the following PowerShell versions;
+
+| Windows PowerShell 5.1 | PowerShell Core | PowerShell 7 |
+|:----------------------:|:---------------:|:------------:|
+|          Yes           |       Yes       |     Yes      |
+
 ## :wrench: Pre-requisites
 
+Each of the following modules will be automatically installed by following the [module installation](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement#package-module-installation) procedure.
+
+These modules may also be installed individually.
+
+- [PScribo](https://www.powershellgallery.com/packages/PScribo/) (Minimum version 0.9.0)
+- [AsBuiltReport.Core Module](https://www.powershellgallery.com/packages/AsBuiltReport.Core/)
+
 ### :closed_lock_with_key: Required Privileges
+A user with Prism `Cluster Admin` privileges is required to generate a Nutanix Prism Element As Built Report.
 
 ## :package: Module Installation
 
-Open a Windows PowerShell terminal window and install the required modules as follows;
+Open a PowerShell terminal window and install the required modules as follows;
 ```powershell
 install-module AsBuiltReport.Nutanix.PrismElement
 ```

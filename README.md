@@ -62,10 +62,25 @@ A user with Prism `Cluster Admin` privileges is required to generate a Nutanix P
 
 ## :package: Module Installation
 
+### **PowerShell**
 Open a PowerShell terminal window and install the required modules as follows;
 ```powershell
 install-module AsBuiltReport.Nutanix.PrismElement
 ```
+
+### **GitHub**
+If you are unable to use the PowerShell Gallery, you can still install the module manually. Ensure you repeat the following steps for the [pre-requistes](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement#wrench-pre-requisites) also.
+
+1. Download the [latest release](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/releases/latest) zip from GitHub
+2. Extract the zip file
+3. Copy the folder `AsBuiltReport.Nutanix.PrismElement` to a path that is set in `$env:PSModulePath`. By default this could be `C:\Program Files\WindowsPowerShell\Modules` or `C:\Users\<user>\Documents\WindowsPowerShell\Modules`
+4. Open a PowerShell terminal window and unblock the downloaded files with 
+    ```powershell
+    $path = (Get-Module -Name AsBuiltReport.Nutanix.PrismElement -ListAvailable).ModuleBase; Unblock-File -Path $path\*.psd1; Unblock-File -Path $path\Src\Public\*.ps1; Unblock-File -Path $path\Src\Private\*.ps1
+    ```
+5. Close and reopen the PowerShell terminal window.
+
+_Note: You are not limited to installing the module to those example paths, you can add a new entry to the environment variable PSModulePath if you want to use another path._
 
 ## :pencil2: Configuration
 The Nutanix Prism As Built Report utilises a JSON file to allow configuration of report information, options, detail and healthchecks. 

@@ -42,9 +42,9 @@ The Nutanix Prism Element As Built Report supports the following AOS versions;
 ### **PowerShell**
 This report is compatible with the following PowerShell versions;
 
-| Windows PowerShell 5.1 | PowerShell Core | PowerShell 7 |
-|:----------------------:|:---------------:|:------------:|
-|          Yes           |       Yes       |     Yes      |
+| Windows PowerShell 5.1 |  PowerShell Core   |    PowerShell 7    |
+|:----------------------:|:------------------:|:------------------:|
+|   :white_check_mark:   | :white_check_mark: | :white_check_mark: |
 
 ## :wrench: Pre-requisites
 

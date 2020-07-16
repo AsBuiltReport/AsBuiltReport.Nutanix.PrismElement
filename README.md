@@ -34,7 +34,7 @@ Sample Prism Element As Built report with health checks, using default report st
 # :beginner: Getting Started
 Below are the instructions on how to install, configure and generate a Nutanix Prism As Built report.
 
-## :hamburger: Supported Versions
+## :floppy_disk: Supported Versions
 ### **Prism / AOS**
 The Nutanix Prism Element As Built Report supports the following AOS versions;
 - AOS 5.x

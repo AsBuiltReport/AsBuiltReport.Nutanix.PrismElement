@@ -1,12 +1,17 @@
 {
     "Report": {
-        "Name": "Nutanix Prism As Built Report",
+        "Name": "Nutanix Prism Element As Built Report",
         "Version": "1.0",
         "Status": "Released"
     },
+    "Options": {
+        "ShowCoverPageImage": true,
+        "ShowHeaderFooter": true,
+        "ShowTableCaptions": true
+    },
     "InfoLevel": {
-        "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Comprehensive",
-        "Cluster": 1,
+        "_comment_": "0 = Disabled, 1 = Enabled / Summary, 2 = Detailed, 3 = Adv Detailed, 4 = Comprehensive",
+        "Cluster": 2,
         "System": 2,
         "Hosts": 2,
         "Storage": 2,
@@ -15,11 +20,15 @@
     },
     "HealthCheck": {
         "Cluster": {
-            "Timezone": "UTC",
+            "Timezone": false,
+            "TimezoneSetting": "UTC",
             "DataResiliency": true
         },
         "CVM": {
             "PowerState": true
+        },
+        "System": {
+            "ImageState": false
         },
         "Hardware": {
             "DiskStatus": true,
@@ -32,7 +41,8 @@
             "ErasureCoding": false
         },
         "VM": {
-            "PowerState": true
+            "PowerState": true,
+            "NicConnectionState": true
         },
         "DataProtection": {
             "CompressOnWire": false,

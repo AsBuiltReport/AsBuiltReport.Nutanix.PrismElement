@@ -29,7 +29,7 @@
 ### Sample Report - Default Style
 Sample Prism Element As Built report with health checks, using default report style.
 
-![Sample Prism Element As Built Report](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample_Prism_Element_As_Built_Report.png "Sample Prism Element As Built Report")
+![Sample Prism Element As Built Report](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample_Prism_Element_As_Built_Report.jpg "Sample Prism Element As Built Report")
 
 # :beginner: Getting Started
 Below are the instructions on how to install, configure and generate a Nutanix Prism As Built report.

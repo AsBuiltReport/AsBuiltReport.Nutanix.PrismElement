@@ -23,7 +23,7 @@
             <img src="https://img.shields.io/twitter/follow/AsBuiltReport.svg?style=social"/></a>
 </p>
 
-# Nutanix Prism As Built Report
+# Nutanix Prism Element As Built Report
 
 ## :books: Sample Reports
 ### Sample Report - Default Style
@@ -55,7 +55,7 @@ These modules may also be installed individually.
 | Module Name        | Minimum Required Version |                          PS Gallery                           |                                   GitHub                                    |
 |--------------------|:------------------------:|:---------------------------------------------------------------------:|:---------------------------------------------------------------------------:|
 | PScribo            |          0.9.0           |      [Link](https://www.powershellgallery.com/packages/PScribo)       |         [Link](https://github.com/iainbrighton/PScribo/tree/master)         |
-| AsBuiltReport.Core |          1.0.4           | [Link](https://www.powershellgallery.com/packages/AsBuiltReport.Core) | [Link](https://github.com/AsBuiltReport/AsBuiltReport.Core/releases/latest) |
+| AsBuiltReport.Core |          1.0.5           | [Link](https://www.powershellgallery.com/packages/AsBuiltReport.Core) | [Link](https://github.com/AsBuiltReport/AsBuiltReport.Core/releases/latest) |
 
 ### :closed_lock_with_key: Required Privileges
 A user with Prism `Cluster Admin` privileges is required to generate a Nutanix Prism Element As Built Report.

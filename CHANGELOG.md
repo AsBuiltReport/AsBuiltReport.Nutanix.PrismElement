@@ -1,4 +1,27 @@
-# Nutanix Prism Element As Built Report Changelog
+# :arrows_counterclockwise: Nutanix Prism Element As Built Report Changelog
+
+## [1.1.0] 2020-07-16
+### Added
+- Added Nutanix logo to the cover page
+- Added headers, footers & table captions/numbering
+- Added Data Protection health checks
+- Added reporting for;
+    - Witness Server
+    - Images
+    - Healthchecks
+    - Volume Groups
+
+### Changed
+- Updated default style to closely align with Nutanix image/colour branding
+- Expanded reporting for AHV
+    - VM Disks
+    - VM NICs
+    - VM Snapshots
+
+### Fixed
+- Improved error handling when working with Nutanix Prism APIs
+- Improved script execution for running report on Nutanix clusters with different hypervisor types
+- Improved table formatting
 
 ## [1.0.1] 2020-05-21
 ### Fixed

@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/XML/Text formats using PScribo.
     .NOTES
-        Version:        1.0.1
+        Version:        1.1.0
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -23,7 +23,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
 
     # Import JSON Configuration for Options and InfoLevel
     $InfoLevel = $ReportConfig.InfoLevel
-
+    $Options = $ReportConfig.Options
+    # Used to set values to TitleCase where required
     $TextInfo = (Get-Culture).TextInfo
 
     # If custom style not set, use default style
@@ -65,40 +66,72 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
     #endregion Workaround for SelfSigned Cert an force TLS 1.2
 
-    foreach ($Ntnx in $Target) {
-        #region System Connection
-        $username = $Credential.UserName
-        $password = $Credential.GetNetworkCredential().Password
-        $api_v1 = "https://" + $ntnx + ":9440/PrismGateway/services/rest/v1"
-        $api_v2 = "https://" + $ntnx + ":9440/PrismGateway/services/rest/v2.0"
-        $auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($username + ":" + $password ))
-        $Header = @{"Authorization" = "Basic $auth" }
-        #endregion System Connection
+    foreach ($NtnxPE in $Target) {
 
         #region API Collections
-        $NtnxAlertsConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/alerts/configuration/') -Headers $Header
-        $NtnxAuthConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/authconfig/') -Headers $Header
-        $NtnxContainers = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/storage_containers/') -Headers $Header).entities
-        $NtnxCluster = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/') -Headers $Header
-        #$NtnxWitness = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/metro_witness/') -Headers $Header
-        $NtnxSmtpConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/smtp/') -Headers $Header
-        $NtnxSnmpConfig = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/snmp/') -Headers $Header
-        $NtnxFtStatus = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/domain_fault_tolerance_status/') -Headers $Header
-        $NtnxDisks = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/disks/') -Headers $Header).entities
-        $NtnxHosts = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/hosts/') -Headers $Header).entities
-        $NtnxNetworks = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/networks/') -Headers $Header).entities
-        $NtnxStoragePools = (Invoke-RestMethod -Method Get -Uri ($api_v1 + '/storage_pools/') -Headers $Header).entities
-        $NtnxVMs = (Invoke-RestMethod -Method Get -Uri ($api_v1 + '/vms/') -Headers $Header).entities
-        $NtnxCVMs = (Invoke-RestMethod -Method Get -Uri ($api_v1 + '/vms/') -Headers $Header).entities | Where-Object { $_.controllerVm }
-        $NtnxNfsWhitelist = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/cluster/nfs_whitelist/') -Headers $Header
-        $NtnxHealthChecks = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/health_checks/') -Headers $Header
-        $NtnxLicense = Invoke-RestMethod -Method Get -Uri ($api_v1 + '/license/') -Headers $Header
-        $NtnxProtectionDomains = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/protection_domains/') -Headers $Header).entities
-        $NtnxPDReplications = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/protection_domains/replications/') -Headers $Header).entities
-        $NtnxUnprotectedVMs = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/protection_domains/unprotected_vms/') -Headers $Header).entities
-        $NtnxRemoteSites = Invoke-RestMethod -Method Get -Uri ($api_v1 + '/remote_sites/') -Headers $Header
-        $NtnxDrSnapshots = (Invoke-RestMethod -Method Get -Uri ($api_v2 + '/remote_sites/dr_snapshots/') -Headers $Header).entities
+        $NtnxCluster = Get-NtnxApi -Version 2 -Uri '/cluster'
+        $NtnxVMs = (Get-NtnxApi -Version 1 -Uri '/vms').entities
+        $NtnxVirtualDisks = (Get-NtnxApi -Version 1 -Uri '/virtual_disks').entities
+        $NtnxSnapshots = (Get-NtnxApi -Version 2 -Uri '/snapshots').entities
+        $NtnxContainers = (Get-NtnxApi -Version 2 -Uri '/storage_containers').entities | Sort-Object Name
+        $NtnxHosts = (Get-NtnxApi -Version 2 -Uri '/hosts').entities | Sort-Object Name
+        $NtnxNetworks = (Get-NtnxApi -Version 2 -Uri '/networks').entities | Sort-Object Name
+        $NtnxStoragePools = (Get-NtnxApi -Version 1 -Uri '/storage_pools').entities | Sort-Object Name
+        $NtnxFtStatus = (Get-NtnxApi -Version 2 -Uri '/cluster/domain_fault_tolerance_status')
+        $NtnxCVMs = (Get-NtnxApi -Version 1 -Uri '/vms').entities | Where-Object { $_.controllerVm }
+        $NtnxWitness = Get-NtnxApi -Version 2 -Uri '/cluster/metro_witness'
+        $NtnxNfsWhitelist = Get-NtnxApi -Version 2 -Uri '/cluster/nfs_whitelist'
+        $NtnxAuthConfig = Get-NtnxApi -Version 2 -Uri '/authconfig'
+        $NtnxImagesConfig = (Get-NtnxApi -Version 2 -Uri '/images').entities | Sort-Object Name
+        $NtnxSmtpConfig = Get-NtnxApi -Version 2 -Uri '/cluster/smtp'
+        $NtnxAlertsConfig = Get-NtnxApi -Version 2 -Uri 'alerts/configuration'
+        $NtnxSnmpConfig = Get-NtnxApi -Version 2 -Uri '/snmp'   
+        $NtnxLicense = Get-NtnxApi -Version 1 -Uri '/license/'
+        $NtnxHealthChecks = (Get-NtnxApi -Version 2 -Uri '/health_checks').entities | Sort-Object name
+        $NtnxDisks = (Get-NtnxApi -Version 2 -Uri '/disks').entities | Sort-Object Id
+        $NtnxVolumeGroups = (Get-NtnxApi -Version 2 -Uri '/volume_groups').entities | Sort-Object Name
+        $NtnxProtectionDomains = (Get-NtnxApi -Version 2 -Uri '/protection_domains').entities
+        $NtnxRemoteSites = Get-NtnxApi -Version 1 -Uri '/remote_sites'
+        $NtnxPDReplications = (Get-NtnxApi -Version 2 -Uri '/protection_domains/replications').entities
+        $NtnxDrSnapshots = (Get-NtnxApi -Version 2 -Uri '/remote_sites/dr_snapshots').entities
+        $NtnxUnprotectedVMs = (Get-NtnxApi -Version 2 -Uri '/protection_domains/unprotected_vms').entities
+        if ($NtnxCluster.hypervisor_types -eq 'kVMware') {
+            $NtnxDatastores = Get-NtnxApi -Version 2 -Uri '/storage_containers/datastores' | Sort-Object datastore_name
+        }
         #endregion API Collections
+
+        #region Lookups
+        $NtnxContainerLookup = @{}
+        foreach ($NtnxContainer in $NtnxContainers) {
+            $NtnxContainerLookup.($NtnxContainer.storage_container_uuid) = $NtnxContainer.Name
+        }
+
+        $NtnxHostLookup = @{}
+        foreach ($NtnxHost in $NtnxHosts) {
+            $NtnxHostLookup.($NtnxHost.uuid) = $NtnxHost.hypervisor_address
+        }
+
+        $NtnxNetworkLookup = @{}
+        $NtnxNetworkVlanLookup = @{}
+        foreach ($NtnxNetwork in $NtnxNetworks) {
+            $NtnxNetworkLookup.($NtnxNetwork.uuid) = $NtnxNetwork.name
+            $NtnxNetworkVlanLookup.($NtnxNetwork.uuid) = $NtnxNetwork.vlan_id
+        }
+
+        $NtnxStoragePoolLookup = @{}
+        foreach ($NtnxStoragePool in $NtnxStoragePools) {
+            foreach ($DiskUuid in $NtnxStoragePool.diskUuids) {
+                $NtnxStoragePoolLookup.($DiskUuid) = $NtnxStoragePool.name
+            }
+        }
+
+        # Excludes CVMs and VMs not running on a container
+        $NtnxVirtualMachines = $NtnxVMs | Where-Object { ($_.controllervm -eq $false) -and ($_.runningOnNdfs -eq $true) } | Sort-Object vmName
+        $NtnxVirtualMachineLookup = @{}
+        foreach ($NtnxVirtualMachine in $NtnxVirtualMachines) {
+            $NtnxVirtualMachineLookup.($NtnxVirtualMachine.uuid) = $NtnxVirtualMachine.vmName
+        }
+        #endregion Lookups
 
         Section -Style Heading1 $NtnxCluster.name {
             #region Cluster Section
@@ -131,26 +164,46 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Timezone' = $NtnxCluster.timezone
                             }
                             if ($Healthcheck.Cluster.Timezone) {
-                                $ClusterSummary | Where-Object { $_.'Timezone' -ne $Healthcheck.Cluster.Timezone } | Set-Style -Style Critical -Property 'Timezone'
+                                $ClusterSummary | Where-Object { $_.'Timezone' -ne $Healthcheck.Cluster.TimezoneSetting } | Set-Style -Style Warning -Property 'Timezone'
                             }
                             if ($Healthcheck.Cluster.DataResiliency) {
+                                $ClusterSummary | Where-Object { $_.'Data Resiliency Status' -eq 'OK' } | Set-Style -Style OK -Property 'Data Resiliency Status'
                                 $ClusterSummary | Where-Object { $_.'Data Resiliency Status' -ne 'OK' } | Set-Style -Style Critical -Property 'Data Resiliency Status'
                             }
-                            $ClusterSummary | Table -List -Name 'Cluster Summary' -ColumnWidths 50, 50
+                            $TableParams = @{
+                                Name = "Cluster Summary - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $ClusterSummary | Table @TableParams
                         }
                         #endregion Hardware
 
                         #region Network
                         Section -Style Heading3 'Network' {
-                            $Network = [PSCustomObject]@{
-                                'Cluster Virtual IP Address' = $NtnxCluster.cluster_external_ipaddress 
-                                'iSCSI Data Services IP Address' = $NtnxCluster.cluster_external_data_services_ipaddress 
+                            $Networks = [PSCustomObject]@{
+                                'Virtual IP Address' = $NtnxCluster.cluster_external_ipaddress 
+                                'iSCSI Data Services IP Address' = Switch ($NtnxCluster.cluster_external_data_services_ipaddress) {
+                                    $null { '--' }
+                                    default { $NtnxCluster.cluster_external_data_services_ipaddress }
+                                }
                                 'External Subnet' = $NtnxCluster.external_subnet
                                 'Internal Subnet' = $NtnxCluster.internal_subnet 
                                 'DNS Server(s)' = $NtnxCluster.name_servers -join ', ' 
                                 'NTP Server(s)' = ($NtnxCluster.ntp_servers | Sort-Object) -join ', '
                             }
-                            $Network | Table -List -Name 'Network' -ColumnWidths 50, 50
+                            $TableParams = @{
+                                Name = "Network - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $Networks | Table @TableParams
                         }
                         #endregion Network
 
@@ -162,16 +215,42 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'Power State' = $TextInfo.ToTitleCase($NtnxCVM.powerState)
                                     'Host' = $NtnxCVM.hostName 
                                     'IP Address' = $NtnxCVM.ipAddresses[0] 
-                                    'CPUs' = $NtnxCVM.numVCPUs 
-                                    'Memory' = "$([math]::Round(($NtnxCVM.memoryCapacityinBytes) / 1GB, 2)) GB"
+                                    'Cores' = $NtnxCVM.numVCPUs 
+                                    'Memory' = "$([math]::Round(($NtnxCVM.memoryCapacityinBytes) / 1073741824, 2)) GiB"
                                 }
                             }
                             if ($Healthcheck.CVM.PowerState) {
                                 $ControllerVMs | Where-Object { $_.'Power State' -ne 'on' } | Set-Style -Style Critical -Property 'Power State'
                             }
-                            $ControllerVMs | Sort-Object Host | Table -Name 'Controller VMs'
+                            $TableParams = @{
+                                Name = "Controller VMs - $($NtnxCluster.Name)"
+                                ColumnWidths = 28, 10, 20, 20, 10, 12
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $ControllerVMs | Sort-Object Host | Table @TableParams
                         }
                         #endregion Controller VMs
+
+                        #region Witness
+                        if ($NtnxWitness) {
+                            Section -Style Heading3 'Witness Server' {
+                                $Witness = [PSCustomObject]@{
+                                    'Witness Name' = $NtnxWitness.witness_name
+                                    'IP Address' = $NtnxWitness.ip_addresses -join ', '
+                                }
+                                $TableParams = @{
+                                    Name = "Witness Server - $($NtnxCluster.Name)"
+                                    ColumnWidths = 50, 50
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $Witness | Table @TableParams
+                            }
+                        }
+                        #endregion Witness
                     }
                 }
             }
@@ -186,7 +265,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $NtnxNfsWhitelists = [PSCustomObject]@{
                                 'Global Filesystem Whitelists' = $NtnxNfsWhitelist -join [Environment]::NewLine
                             }
-                            $NtnxNfsWhitelists | Table -List -Name 'Filesystem Whitelists' -ColumnWidths 50, 50
+                            $TableParams = @{
+                                Name = "Filesystem Whitelists - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $NtnxNfsWhitelists | Table @TableParams
                         }
                     }
                     #endregion Global Filesystem Whitelists
@@ -198,24 +285,72 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $AuthenticationTypes = [PSCustomObject]@{
                                     'Authentication Types' = $TextInfo.ToTitleCase(($NtnxAuthConfig.auth_type_list.Replace('_', ' ') -join ', ').ToLower())
                                 }
-                                $AuthenticationTypes | Table -List -Name 'Authentication Types' -ColumnWidths 50, 50
+                                $TableParams = @{
+                                    Name = "Authentication Types - $($NtnxCluster.Name)"
+                                    List = $true
+                                    ColumnWidths = 50, 50
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $AuthenticationTypes | Table @TableParams
                             }
                             if ($NtnxAuthConfig.directory_list) {
                                 Section -Style Heading4 'Directory List' {
                                     $DirectoryList = [PSCustomObject]@{
-                                        'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower())
+                                        'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower()).Replace("_"," ")
                                         'Directory Name' = $NtnxAuthConfig.directory_list.name
                                         'Domain' = $NtnxAuthConfig.directory_list.domain
                                         'URL' = $NtnxAuthConfig.directory_list.directory_url
                                         'Connection Type' = $NtnxAuthConfig.directory_list.connection_type
-                                        'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower())
+                                        'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower()).Replace("_"," ")
                                     }
-                                    $DirectoryList | Table -List -Name 'Directory List' -ColumnWidths 50, 50
+                                    $TableParams = @{
+                                        Name = "Directory List - $($NtnxCluster.Name)"
+                                        List = $true
+                                        ColumnWidths = 50, 50
+                                    }
+                                    if ($Options.ShowTableCaptions) {
+                                        $TableParams['Caption'] = "- $($TableParams.Name)"
+                                    }
+                                    $DirectoryList | Table @TableParams
                                 }
                             }
                         }
                     }
                     #endregion Authentication
+
+                    #region Image Configurations
+                    if ($NtnxImagesConfig) {
+                        Section -Style Heading3 'Image Configuration' {
+                            $Images = foreach ($NtnxImage in $NtnxImagesConfig) {
+                                [PSCustomObject]@{
+                                    'Image Name' = $NtnxImage.name
+                                    'Annotation' = $NtnxImage.annotation
+                                    'Type' = Switch ($NtnxImage.image_type) {
+                                        'DISK_IMAGE' { 'DISK' }
+                                        'ISO_IMAGE' { 'ISO' }
+                                    }
+                                    'State' = $TextInfo.ToTitleCase(($NtnxImage.image_state).ToLower())
+                                    'Size' = Switch ($NtnxImage.vm_disk_size) {
+                                        $null { '--' }
+                                        default { "$([math]::Round(($NtnxImage.vm_disk_size) / 1073741824, 2)) GiB" }
+                                    }
+                                }
+                            }
+                            if ($Healthcheck.System.ImageState) {
+                                $Images | Where-Object { $_.'State' -ne 'Active' } | Set-Style -Style Warning #-Property 'State'
+                            }
+                            $TableParams = @{
+                                Name = "Image Configuration - $($NtnxCluster.Name)"
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $Images | Table @TableParams
+                        } 
+                    }
+                    #endregion Image Configuration
 
                     #region SMTP
                     if ($NtnxSmtpConfig.Address) {
@@ -234,7 +369,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Secure Mode' = $TextInfo.ToTitleCase(($NtnxSmtpConfig.secure_mode).ToLower())
                                 'From Email Address' = $NtnxSmtpConfig.from_email_address
                             }
-                            $SmtpConfig | Table -List -Name 'SMTP Server' -ColumnWidths 50, 50
+                            $TableParams = @{
+                                Name = "SMTP Server - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $SmtpConfig | Table @TableParams
                         }
                     }
                     #endregion SMTP
@@ -254,7 +397,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Nutanix Support Email' = $NtnxAlertsConfig.default_nutanix_email 
                                 'Additional Email Recipients' = $NtnxAlertsConfig.email_contact_list -join ', '                         
                             }
-                            $AlertConfig | Table -List -Name 'Alert Email Configuration' -ColumnWidths 50, 50
+                            $TableParams = @{
+                                Name = "Alert Email Configuration - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $AlertConfig | Table @TableParams
                         }
                     }
                     #endregion Alerts Configuration
@@ -263,7 +414,10 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     if ($NtnxSnmpConfig.Enabled) {
                         Section -Style Heading3 'SNMP Configuration' {
                             $SnmpConfig = [PSCustomObject]@{
-                                'Enabled' = $NtnxSnmpConfig.enabled              
+                                'Enabled' = Switch ($NtnxSnmpConfig.enabled) {
+                                    $true { 'Yes' }
+                                    $false { 'No' }
+                                }              
                                 'Transports' = Switch ($NtnxSnmpConfig.snmp_transports) {
                                     $null { 'Not configured' }
                                     default { $NtnxSnmpConfig.snmp_transports -join ',' }
@@ -277,17 +431,27 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     default { $NtnxSnmpConfig.snmp_traps -join ',' }
                                 }    
                             }
-                            $SnmpConfig | Table -List -Name 'SNMP Configuration' -ColumnWidths 50, 50
+                            $TableParams = @{
+                                Name = "SNMP Configuration - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $SnmpConfig | Table @TableParams
                         }
                     }
                     #endregion SNMP Configuration
 
                     #region Syslog Configuration
+                    <#
                     if ($NtnxSyslogConfig) {
                         Section -Style Heading3 'Syslog Configuration' {
                             # ToDo: Syslog Configuration
                         }
                     }
+                    #>
                     #endregion Syslog Configuration
                     
                     #region Licensing
@@ -297,10 +461,14 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Cluster' = $NtnxCluster.name 
                                 'License' = $NtnxLicense.category
                             }
-                            if ($Healthcheck.System.License) {
-                                $Licensing | Where-Object { $_.'License' -ne $Healthcheck.System.License } | Set-Style -Style Warning -Property 'License'
+                            $TableParams = @{
+                                Name = "Licensing - $($NtnxCluster.Name)"
+                                ColumnWidths = 50, 50
                             }
-                            $Licensing | Table -Name 'Licensing' -ColumnWidths 50, 50
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $Licensing | Table @TableParams
 
                             if ($InfoLevel.System -gt 2) {
                                 #region Licensing Features
@@ -325,13 +493,89 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             }
                                         }
                                     }
-                                    $LicensingFeatures | Sort-Object 'Feature' | Table -Name 'Licensing Features' -ColumnWidths 50, 50
+                                    $TableParams = @{
+                                        Name = "Licensing Features - $($NtnxCluster.Name)"
+                                        ColumnWidths = 50, 50
+                                    }
+                                    if ($Options.ShowTableCaptions) {
+                                        $TableParams['Caption'] = "- $($TableParams.Name)"
+                                    }
+                                    $LicensingFeatures | Sort-Object 'Feature' | Table @TableParams
                                 }
                                 #endregion Licensing Features
                             }
                         }
                     }
                     #endregion Licensing
+
+                    #region Health Checks
+                    if ($NtnxHealthChecks) {
+                        Section -Style Heading3 'Health Checks' {
+                            #region Health Checks Summary Information
+                            if ($InfoLevel.System -lt 4) {
+                                $HealthChecks = [PSCustomObject]@{
+                                        'All Checks' = $NtnxHealthChecks.Count
+                                        #'Passed' = ''
+                                        #'Failed' = ''
+                                        #'Warning' = ''
+                                        #'Error' = ''
+                                        #'Off' = ''
+                                        'Scheduled' = ($NtnxHealthChecks | Where-Object {$_.check_type -eq 'scheduled'}).Count
+                                        'Not Scheduled' = ($NtnxHealthChecks | Where-Object {$_.check_type -eq 'not_scheduled'}).Count
+                                        'Event Triggered' = ($NtnxHealthChecks | Where-Object {$_.check_type -eq 'event_driven'}).Count
+                                    }
+                                $TableParams = @{
+                                    Name = "Health Checks - $($NtnxCluster.Name)"
+                                    #List = $true
+                                    #ColumnWidths = 50, 50
+                                    ColumnWidths = 25, 25, 25, 25
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $HealthChecks | Table @TableParams
+                            }
+                            #endregion Health Checks Summary Information
+
+                            #region Health Checks Comprehensive Information
+                            if ($InfoLevel.System -eq 4) {
+                                foreach ($NtnxHealthCheck in $NtnxHealthChecks) {
+                                    Section -Style Heading4 "$($NtnxHealthCheck.name)" {
+                                        $HealthChecksFull = [PSCustomObject]@{
+                                            'Health Check' = $NtnxHealthCheck.name
+                                            'Description' = $NtnxHealthCheck.description
+                                            'Enabled' = Switch ($NtnxHealthCheck.enabled) {
+                                                $true { 'Yes' }
+                                                $false { 'No' }
+                                            }
+                                            'Auto Resolve' = Switch ($NtnxHealthCheck.auto_resolve) {
+                                                $true { 'Yes' }
+                                                $false { 'No' }
+                                            }
+                                            'Check Type' = $NtnxHealthCheck.check_type
+                                            'Schedule Interval (secs)' = $NtnxHealthCheck.schedule_interval_in_secs
+                                            'Affected Entities' = ($NtnxHealthCheck.affected_entity_types | Sort-Object) -join ', '
+                                            'Classifications' = ($NtnxHealthCheck.classifications | Sort-Object) -join ', '
+                                            'Causes' = $NtnxHealthCheck.causes
+                                            'Resolutions' = $NtnxHealthCheck.resolutions
+                                            'Scope' = ($NtnxHealthCheck.scope).TrimStart('k')
+                                        }
+                                        $TableParams = @{
+                                            Name = "Health Check $($NtnxHealthCheck.name) - $($NtnxCluster.Name)"
+                                            List = $true
+                                            ColumnWidths = 50, 50
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $HealthChecksFull | Table @TableParams
+                                    }
+                                }
+                            }
+                            #endregion Health Checks Comprehensive Information
+                        }
+                    }
+                    #endregion Health Checks
                 }
             }
             #endregion System Section
@@ -350,7 +594,14 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #ToDo: Total # Disks (SSD/HDD)
                                 #ToDo: # of Network Switches
                             }
-                            $NtnxHostSummary | Table -Name 'Hardware Summary' -ColumnWidths 25, 25, 25, 25
+                            $TableParams = @{
+                                Name = "Hardware Summary - $($NtnxCluster.Name)"
+                                ColumnWidths = 25, 25, 25, 25
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $NtnxHostSummary | Table @TableParams
                         }
                     }
                     #endregion Host Hardware Summary
@@ -365,7 +616,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 Section -Style Heading4 'Hardware' {
                                     $NtnxHostConfig = [PSCustomObject]@{
                                         'Host Name' = $NtnxHost.name
-                                        'Host Type' = $TextInfo.ToTitleCase(($NtnxHost.host_type).ToLower())
+                                        'Host Type' = $TextInfo.ToTitleCase(($NtnxHost.host_type).ToLower()).Replace("_"," ")
                                         'Node Serial' = $NtnxHost.serial 
                                         'Block Serial' = $NtnxHost.block_serial 
                                         'Block Model' = $NtnxHost.block_model_name 
@@ -375,18 +626,26 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         'Memory' = "$([math]::Round(($NtnxHost.memory_capacity_in_bytes) / 1073741824, 2)) GiB"
                                         'CPU Capacity' = "$([math]::Round(($NtnxHost.cpu_capacity_in_hz) / 1000000000, 1)) GHz"
                                         'CPU Model' = $NtnxHost.cpu_model
-                                        'No. of CPU Cores' = $NtnxHost.num_cpu_cores
-                                        'No. of Sockets' = $NtnxHost.num_cpu_sockets
-                                        #ToDo: 'No. of Disks'
-                                        #ToDo: 'No. of NICs'
-                                        'No. of VMs' = $NtnxHost.num_vms
+                                        'Number of CPU Cores' = $NtnxHost.num_cpu_cores
+                                        'Number of Sockets' = $NtnxHost.num_cpu_sockets
+                                        #ToDo: 'Number of Disks'
+                                        #ToDo: 'Number of NICs'
+                                        'Number of VMs' = $NtnxHost.num_vms
                                         'Oplog Disk %' = "$($NtnxHost.oplog_disk_pct) %"
                                         'Oplog Disk Size' = "$([math]::Round(($NtnxHost.oplog_disk_size) / 1073741824, 1)) GiB"
                                         'Monitored' = $NtnxHost.monitored
                                         'Hypervisor' = $NtnxHost.hypervisor_full_name
                                         #ToDo: 'Datastores'
                                     }
-                                    $NtnxHostConfig | Table -List -Name 'Host Hardware Specifications' -ColumnWidths 50, 50
+                                    $TableParams = @{
+                                        Name = "Host Hardware Specifications - $($NtnxCluster.Name)"
+                                        List = $true
+                                        ColumnWidths = 50, 50
+                                    }
+                                    if ($Options.ShowTableCaptions) {
+                                        $TableParams['Caption'] = "- $($TableParams.Name)"
+                                    }
+                                    $NtnxHostConfig | Table @TableParams
                                 }
                                 #endregion Host Hardware
 
@@ -395,61 +654,86 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     $NtnxHostNetworks = [PSCustomObject]@{
                                         'Hypervisor IP Address' = $NtnxHost.hypervisor_address 
                                         'CVM IP Address' = $NtnxHost.service_vmexternal_ip 
-                                        'IPMI IP Address' = $NtnxHost.ipmi_address
+                                        'IPMI IP Address' = Switch ($NtnxHost.ipmi_address) {
+                                            $null { '--' }
+                                            default { $NtnxHost.ipmi_address }
+                                        }
                                     }
-                                    $NtnxHostNetworks | Table -Name 'Host Network Specifications'
+                                    $TableParams = @{
+                                        Name = "Host Network Specifications - $($NtnxCluster.Name)"
+                                    }
+                                    if ($Options.ShowTableCaptions) {
+                                        $TableParams['Caption'] = "- $($TableParams.Name)"
+                                    }
+                                    $NtnxHostNetworks | Table @TableParams
                                 }
                                 #endregion Host Network 
 
                                 #region Host Disks
-                                if ($NtnxDisks) {
+                                $NtnxHostDisks = $NtnxDisks | Where-Object { $_.node_uuid -eq $NtnxHost.uuid } | Sort-Object 'Location'
+                                if ($NtnxHostDisks) {
                                     Section -Style Heading5 'Disks' {
-                                        $NtnxDisks = $NtnxDisks | Where-Object { $_.cvm_ip_address -eq $NtnxHost.service_vmexternal_ip } | Sort-Object 'Location'
-                                        $NtnxHostDisks = foreach ($NtnxDisk in $NtnxDisks) {
+                                        $HostDisks = foreach ($NtnxHostDisk in $NtnxHostDisks) {
                                             [PSCustomObject]@{
-                                                'Location' = $NtnxDisk.location
-                                                'Disk ID' = (($NtnxDisk.id) -split ('::'))[1]
-                                                'Serial Number' = $NtnxDisk.disk_hardware_config.serial_number
-                                                'Vendor' = $NtnxDisk.disk_hardware_config.vendor
-                                                'Model' = $NtnxDisk.disk_hardware_config.model
-                                                'Firmware' = $NtnxDisk.disk_hardware_config.current_firmware_version
-                                                'Storage Tier' = $NtnxDisk.storage_tier_name
+                                                'Location' = $NtnxHostDisk.location
+                                                'Disk ID' = (($NtnxHostDisk.id) -split ('::'))[1]
+                                                'Serial Number' = $NtnxHostDisk.disk_hardware_config.serial_number
+                                                'Vendor' = $NtnxHostDisk.disk_hardware_config.vendor
+                                                'Model' = $NtnxHostDisk.disk_hardware_config.model
+                                                'Firmware' = $NtnxHostDisk.disk_hardware_config.current_firmware_version
+                                                'Storage Tier' = $NtnxHostDisk.storage_tier_name
+                                                'Used (Physical)' = "$([math]::Round(($NtnxHostDisk.usage_stats.'storage.usage_bytes') / 1073741824, 2)) GiB"
+                                                'Capacity (Logical)' = "$([math]::Round(($NtnxHostDisk.disk_size) / 1099511627776, 2)) TiB"
                                                 'Host Name' = $NtnxHost.name
-                                                'Hypervisor' = $NtnxDisk.host_name
-                                                'Used (Physical)' = "$([math]::Round(($NtnxDisk.usage_stats.'storage.usage_bytes') / 1073741824, 2)) GiB"
-                                                'Capacity (Logical)' = "$([math]::Round(($NtnxDisk.disk_size) / 1099511627776, 2)) TiB"
-                                                'Self Encryption Drive' = Switch ($NtnxDisk.self_encrypting_drive) {
+                                                'Hypervisor' = $NtnxHostDisk.host_name
+                                                'Storage Pool' = $NtnxStoragePoolLookup."$($NtnxHostDisk.disk_uuid)"
+                                                'Self Encryption Drive' = Switch ($NtnxHostDisk.self_encrypting_drive) {
                                                     $true { 'Present' }
                                                     $false { 'Not Present' } 
                                                 }
-                                                'Status' = $TextInfo.ToTitleCase(($NtnxDisk.disk_status).ToLower())
-                                                'Mode' = Switch ($NtnxDisk.online) {
+                                                'Status' = $TextInfo.ToTitleCase(($NtnxHostDisk.disk_status).ToLower())
+                                                'Mode' = Switch ($NtnxHostDisk.online) {
                                                     $true { 'Online' }
                                                     $false { 'Offline' }  
                                                 }
                                             }
                                         }
                                         if ($Healthcheck.Hardware.DiskStatus) {
-                                            $NtnxHostDisks | Where-Object { $_.'Status' -ne 'normal' } | Set-Style -Style Critical -Property 'Status'
+                                            $HostDisks | Where-Object { $_.'Status' -ne 'normal' } | Set-Style -Style Critical -Property 'Status'
                                         }
                                         if ($Healthcheck.Hardware.DiskMode) {
-                                            $NtnxHostDisks | Where-Object { $_.'Mode' -ne 'Online' } | Set-Style -Style Critical -Property 'Mode'
-                                        }   
+                                            $HostDisks | Where-Object { $_.'Mode' -ne 'Online' } | Set-Style -Style Critical -Property 'Mode'
+                                        }  
                                         if ($InfoLevel.Hosts -gt 2) {
-                                            foreach ($NtnxHostDisk in $NtnxHostDisks) {
+                                            foreach ($NtnxHostDisk in $HostDisks) {
                                                 Section -Style Heading5 "Disk $($NtnxHostDisk.Location)" {
-                                                    $NtnxHostDisk | Table -List -Name "Host Disk $($NtnxHostDisk.Location) Specifications" -ColumnWidths 50, 50
+                                                    $TableParams = @{
+                                                        Name = "Host Disk $($NtnxHostDisk.Location) Specifications - $($NtnxCluster.Name)"
+                                                        List = $true
+                                                        ColumnWidths = 50, 50
+                                                    }
+                                                    if ($Options.ShowTableCaptions) {
+                                                        $TableParams['Caption'] = "- $($TableParams.Name)"
+                                                    }
+                                                    $NtnxHostDisk | Table @TableParams
                                                 }
                                             }
                                         } else {
-                                            $NtnxHostDisks | Table -Name 'Host Disk Specifications' -Columns 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
+                                            $TableParams = @{
+                                                Name = "Host Disk Specifications - $($NtnxCluster.Name)"
+                                                Columns = 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
+                                            }
+                                            if ($Options.ShowTableCaptions) {
+                                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                                            }
+                                            $HostDisks | Table @TableParams
                                         }
                                     }
                                 }
                                 #endregion Host Disks
 
-                                #region Host Datastores
-                                if (($NtnxDatastores) -and ($NtnxCluster.hypervisor_types -eq 'kVMware')) {
+                                #region Host Datastores (VMware Hosts Only)
+                                if ($NtnxDatastores) {
                                     Section -Style Heading4 'Datastores' {
                                         $NtnxDatastores = $NtnxDatastores | Where-Object { $_.host_uuid -eq $NtnxHost.uuid }
                                         $NtnxHostDatastores = foreach ($NtnxHostDatastore in $NtnxDatastores) {
@@ -462,7 +746,13 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                 'VMs' = ($NtnxHostDatastore.vm_names).Count
                                             }
                                         }
-                                        $NtnxHostDatastores | Sort-Object 'Datastore' | Table -Name 'Host Datastores'
+                                        $TableParams = @{
+                                            Name = "Host Datastores - $($NtnxCluster.Name)"
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $NtnxHostDatastores | Sort-Object 'Datastore' | Table @TableParams
                                     }
                                 }
                                 #endregion Host Datastores
@@ -479,27 +769,10 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #region Storage Section
             if ($InfoLevel.Storage -gt 0) {
                 Section -Style Heading2 'Storage' {
-                    #region Storage Pools
-                    if ($NtnxStoragePools) {
-                        Section -Style Heading3 'Storage Pools' {
-                            $StoragePools = foreach ($NtnxStoragePool in $NtnxStoragePools) {
-                                [PSCustomObject]@{
-                                    'Storage Pool' = $NtnxStoragePool.name
-                                    'Disks' = ($NtnxStoragePool.disks).count 
-                                    'Free Capacity TiB' = [math]::Round((($NtnxStoragePool.capacity) - ($NtnxStoragePool.usageStats.'storage.disk_physical_usage_bytes')) / 1099511627776, 2)
-                                    'Used Capacity TiB' = [math]::Round(($NtnxStoragePool.usageStats.'storage.disk_physical_usage_bytes') / 1099511627776, 2)
-                                    'Maximum Capacity TiB' = [math]::Round(($NtnxStoragePool.capacity) / 1099511627776, 2)
-                                } 
-                            }
-                            $StoragePools | Sort-Object 'Storage Pool' | Table -Name 'Storage Pools'
-                        }
-                    }
-                    #endregion Storage Pools
-
                     #region Containers
                     if ($NtnxContainers) {
                         Section -Style Heading3 'Containers' {
-                            $Containers = foreach ($NtnxContainer in ($NtnxContainers | Sort-Object Name)) {
+                            $Containers = foreach ($NtnxContainer in $NtnxContainers) {
                                 [PSCustomObject]@{
                                     'Container' = $NtnxContainer.name 
                                     'Replication Factor' = "RF $($NtnxContainer.replication_factor)"
@@ -542,71 +815,370 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $Containers | Where-Object { $_.'Erasure Coding' -ne 'on' } | Set-Style -Style Warning -Property 'Erasure Coding'
                             }
                             if ($InfoLevel.Storage -gt 2) {
-                                foreach ($container in $Containers) {
+                                foreach ($Container in $Containers) {
                                     Section -Style Heading4 "$($Container.Container)" {
-                                        $Container | Table -List -Name 'Containers' -ColumnWidths 50, 50
+                                        $TableParams = @{
+                                            Name = "Containers - $($NtnxCluster.Name)"
+                                            List = $true
+                                            ColumnWidths = 50, 50
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $Container | Table @TableParams
                                     }
                                 }
                             } else {
-                                $Containers | Table -Name 'Containers' -Columns 'Container' , 'Replication Factor', 'Compression', 'Cache Deduplication', 'Capacity Deduplication', 'Erasure Coding', 'Free Capacity (Logical) TiB', 'Used Capacity TiB', 'Maximum Capacity TiB' 
+                                $TableParams = @{
+                                    Name = "Containers - $($NtnxCluster.Name)"
+                                    Columns = 'Container' , 'Replication Factor', 'Compression', 'Cache Deduplication', 'Capacity Deduplication', 'Erasure Coding', 'Free Capacity (Logical) TiB', 'Used Capacity TiB', 'Maximum Capacity TiB' 
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $Containers | Table @TableParams
                             }
                         }
                     }
                     #endregion Containers
-                    #region Datastores
-                    if ($NtnxCluster.hypervisor_types -eq 'kVMware') {
-                        $NtnxDatastores = Invoke-RestMethod -Method Get -Uri ($api_v2 + '/storage_containers/datastores/') -Headers $Header
-                        if ($NtnxDatastores) {
-                            Section -Style Heading3 'Datastores' {
-                                $Datastores = foreach ($NtnxDatastore in $NtnxDatastores) {
-                                    [PSCustomObject]@{
-                                        'Datastore' = $NtnxDatastore.datastore_name
-                                        'Container' = $NtnxDatastore.storage_container_name
-                                        'Free Capacity TiB' = [math]::Round(($NtnxDatastore.free_space) / 1099511627776, 2)
-                                        'Used Capacity TiB' = [math]::Round((($NtnxDatastore.capacity) - ($NtnxDatastore.free_space)) / 1099511627776, 2)
-                                        'Maximum Capacity TiB' = [math]::Round(($NtnxDatastore.capacity) / 1099511627776, 2)
-                                        'VMs' = ($NtnxDatastore.vm_names).Count
-                                    } 
+
+                    #region Volume Groups
+                    if ($NtnxVolumeGroups) {
+                        Section -Style Heading3 'Volume Groups' {
+                            $VolumeGroups = foreach ($NtnxVolumeGroup in $NtnxVolumeGroups) {
+                                [PSCustomObject]@{
+                                    'Volume Group' = $NtnxVolumeGroup.Name
+                                    'Number of Virtual Disks' = ($NtnxVolumeGroup.disk_list).Count
+                                    'Flash Mode' = Switch ($NtnxVolumeGroup.flash_mode_enabled) {
+                                        $true { 'Enabled' }
+                                        default { 'Disabled' }
+                                    }
+                                    'Initiators' = $($NtnxVolumeGroups.attachment_list.iscsi_initiator_name | Sort-Object) -join ', '
+                                    'Target IQN Prefix' = $NtnxVolumeGroup.iscsi_target
                                 }
-                                $Datastores | Sort-Object 'Datastore' | Table -Name 'NFS Datastores'
+                            }
+                            if ($InfoLevel.Storage -eq 1) {
+                                $TableParams = @{
+                                    Name = "Volume Groups - $($NtnxCluster.Name)"
+                                    ColumnWidths = 22, 16, 12, 25, 25
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $VolumeGroups | Table @TableParams
+                            } else {
+                                foreach ($NtnxVolumeGroup in $NtnxVolumeGroups) {
+                                    Section -Style Heading4 $($NtnxVolumeGroup.Name) {
+                                        $VolumeGroup = [PSCustomObject]@{
+                                            'Volume Group' = $NtnxVolumeGroup.Name
+                                            'Number of Virtual Disks' = ($NtnxVolumeGroup.disk_list).Count
+                                            'Flash Mode' = Switch ($NtnxVolumeGroup.flash_mode_enabled) {
+                                                $true { 'Enabled' }
+                                                default { 'Disabled' }
+                                            }
+                                            'Initiators' = $($NtnxVolumeGroups.attachment_list.iscsi_initiator_name | Sort-Object) -join ', '
+                                            'Target IQN Prefix' = $NtnxVolumeGroup.iscsi_target
+                                        }
+                                        $TableParams = @{
+                                            Name = "Volume Group $($NtnxVolumeGroup.Name) - $($NtnxCluster.Name)"
+                                            List = $true
+                                            ColumnWidths = 50, 50
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $VolumeGroup | Table @TableParams
+
+                                        if ($InfoLevel.Storage -ge 3) {
+                                            Section -Style Heading4 'Virtual Disks' {
+                                                $VirtualGroupDisks = $NtnxVolumeGroup.disk_list | Sort-Object Index
+                                                $NtnxVirtualGroupDisks = foreach ($VirtualGroupDisk in $VirtualGroupDisks) {
+                                                    [PSCustomObject]@{
+                                                        'Virtual Disk' = $VirtualGroupDisk.Index
+                                                        'Total Capacity GiB' = [math]::Round(($VirtualGroupDisk.vmdisk_size_bytes) / 1073741824, 0)
+                                                        'Container' = $NtnxContainerLookup."$($VirtualGroupDisk.storage_container_uuid)"
+                                                        'Disk Path' = $VirtualGroupDisk.vmdisk_path 
+                                                    }
+                                                }
+                                                $TableParams = @{
+                                                    Name = "Virtual Disks - $($NtnxVolumeGroup.Name)"
+                                                    ColumnWidths = 15, 15, 35, 35
+                                                }
+                                                if ($Options.ShowTableCaptions) {
+                                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                                }
+                                                $NtnxVirtualGroupDisks | Table @TableParams
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                    #endregion Datastores
+                    #endregion Volume Groups
+
+                    #region Storage Pools
+                    if ($NtnxStoragePools) {
+                        Section -Style Heading3 'Storage Pools' {
+                            $StoragePools = foreach ($NtnxStoragePool in $NtnxStoragePools) {
+                                [PSCustomObject]@{
+                                    'Storage Pool' = $NtnxStoragePool.name
+                                    'Disks' = ($NtnxStoragePool.disks).count 
+                                    'Free Capacity TiB' = [math]::Round((($NtnxStoragePool.capacity) - ($NtnxStoragePool.usageStats.'storage.disk_physical_usage_bytes')) / 1099511627776, 2)
+                                    'Used Capacity TiB' = [math]::Round(($NtnxStoragePool.usageStats.'storage.disk_physical_usage_bytes') / 1099511627776, 2)
+                                    'Maximum Capacity TiB' = [math]::Round(($NtnxStoragePool.capacity) / 1099511627776, 2)
+                                } 
+                            }
+                            $TableParams = @{
+                                Name = "Storage Pools - $($NtnxCluster.Name)"
+                                ColumnWidths = 22, 12, 22, 22, 22
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $StoragePools | Sort-Object 'Storage Pool' | Table @TableParams
+                        }
+                    }
+                    #endregion Storage Pools
+
+                    #region VMWare Datastores
+                    if ($NtnxDatastores) {
+                        Section -Style Heading3 'VMware Datastores' {
+                            $NfsDatastores = foreach ($NtnxDatastore in $NtnxDatastores) {
+                                [PSCustomObject]@{
+                                    'Datastore' = $NtnxDatastore.datastore_name
+                                    'Host' = $NtnxDatastore.host_ip_address
+                                    'Container' = $NtnxDatastore.storage_container_name
+                                    'Free Capacity TiB' = [math]::Round(($NtnxDatastore.free_space) / 1099511627776, 2)
+                                    'Used Capacity TiB' = [math]::Round((($NtnxDatastore.capacity) - ($NtnxDatastore.free_space)) / 1099511627776, 2)
+                                    'Maximum Capacity TiB' = [math]::Round(($NtnxDatastore.capacity) / 1099511627776, 2)
+                                    'Number of VMs' = ($NtnxDatastore.vm_names).Count
+                                    'Virtual Machines' = Switch (($NtnxDatastore.vm_names).Count -gt 0) {
+                                        $true { ($NtnxDatastore.vm_names | Sort-Object) -join ', ' }
+                                        $false { '--' }
+
+                                    }
+                                } 
+                            }
+                            if ($InfoLevel.Storage -eq 1) {
+                                $TableParams = @{
+                                    Name = "VMware Datastores - $($NtnxCluster.Name)"
+                                    Columns = 'Datastore', 'Host', 'Container', 'Free Capacity TiB', 'Used Capacity TiB', 'Maximum Capacity TiB', 'Number of VMs'
+                                    ColumnWidths = 15, 15, 15, 15, 15, 15, 10
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $NfsDatastores | Sort-Object Datastore, Host | Table @TableParams
+                            } else {
+                                foreach ($NfsDatastore in $NfsDatastores) {
+                                    Section -Style Heading4 $($NfsDatastore.Datastore) {
+                                        $TableParams = @{
+                                            Name = "Datastore $($NfsDatastore.Datastore) - $($NfsDatastore.Host)"
+                                            List = $true
+                                            ColumnWidths = 50, 50
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $NfsDatastore | Sort-Object Datastore, Host | Table @TableParams
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    #endregion VMware Datastores
                 }
             }
             #endregion Storage Section
 
             #region Virtual Machines Section
-            if (($InfoLevel.VM -gt 0) -and ($NtnxVMs)) {
-                # Excludes CVMs and VMs not running on a container
-                $NtnxVirtualMachines = $NtnxVMs | Where-Object { ($_.controllervm -eq $false) -and ($_.runningOnNdfs -eq $true) } | Sort-Object vmName
+            if (($InfoLevel.VM -gt 0) -and ($NtnxVirtualMachines)) {
                 Section -Style Heading2 'Virtual Machines' {
-                    $NtnxVMConfigs = foreach ($NtnxVM in $NtnxVirtualMachines) {
-                        [PSCustomObject]@{
-                            'VM' = $NtnxVM.vmName 
-                            'Power State' = $TextInfo.ToTitleCase($NtnxVM.powerState) 
-                            'Operating System' = $NtnxVM.guestOperatingSystem 
-                            'IP Addresses' = $NtnxVM.ipAddresses -join ', '
-                            'vCPUs' = $NtnxVM.numVCpus
-                            'Memory' = "$([math]::Round(($NtnxVM.memoryCapacityInBytes) / 1GB, 0)) GB" 
-                            'NICs' = $NtnxVM.numNetworkAdapters 
-                            'Disk Capacity' = "$([math]::Round(($NtnxVM.diskCapacityinBytes) / 1GB, 2)) GB"
-                            'Host' = $NtnxVM.hostName
-                        }
-                    }
-                    if ($Healthcheck.VM.PowerState) {
-                        $NtnxVMConfigs | Where-Object { $_.'Power State' -eq 'off' } | Set-Style -Style Warning -Property 'Power State'
-                    }
-                    if ($InfoLevel.VM -gt 2) {
-                        foreach ($NtnxVMConfig in $NtnxVMConfigs) {
-                            Section -Style Heading3 "$($NtnxVMConfig.VM)" {
-                                $NtnxVMConfig | Table -List -Name "$($NtnxVMConfig.VM)" -ColumnWidths 50, 50
+                    #region VM Summary Information
+                    if ($InfoLevel.VM -eq 1) {
+                        $VMSummary = foreach ($NtnxVM in $NtnxVirtualMachines) {
+                            [PSCustomObject]@{
+                                'VM Name' = $NtnxVM.vmName
+                                'Power State' = $TextInfo.ToTitleCase($NtnxVM.powerState)
+                                'Cores' = $NtnxVM.numVCpus
+                                'Memory' = "$([math]::Round(($NtnxVM.memoryCapacityInBytes) / 1073741824, 0)) GiB"
+                                'IP Addresses' = $NtnxVM.ipAddresses -join ', '
+                                'Disk Capacity' = "$([math]::Round(($NtnxVM.diskCapacityinBytes) / 1073741824, 2)) GiB"                                
                             }
                         }
-                    } else {
-                        $NtnxVMConfigs | Table -Name 'Virtual Machines' -Columns 'VM', 'Power State', 'vCPUs', 'Memory', 'Disk Capacity'
+                        if ($Healthcheck.VM.PowerState) {
+                            $VMSummary | Where-Object { $_.'Power State' -eq 'off' } | Set-Style -Style Warning -Property 'Power State'
+                        }
+                        $TableParams = @{
+                            Name = "Virtual Machines - $($NtnxCluster.Name)"
+                            ColumnWidths = 24, 11, 11, 11, 28, 15
+                        }
+                        if ($Options.ShowTableCaptions) {
+                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                        }
+                        $VMSummary | Table @TableParams
                     }
+                    #endregion VM Summary Information
+
+                    #region VM Detailed Information
+                    if ($InfoLevel.VM -ge 2) {
+                        foreach ($NtnxVM in $NtnxVirtualMachines) {
+                            Section -Style Heading3 "$($NtnxVM.vmName)" {
+                                $VirtualMachines = [PSCustomObject]@{
+                                    'VM Name' = $NtnxVM.vmName
+                                    'Description' = Switch ($NtnxVM.description) {
+                                        $null { '--' }
+                                        default { $NtnxVM.description }
+                                    }
+                                    'Power State' = $TextInfo.ToTitleCase($NtnxVM.powerState)
+                                    'Host' = Switch ($NtnxVM.hostName) {
+                                        $null { '--' }
+                                        default { $NtnxVM.hostName }
+                                    }
+                                    'Host IP' = Switch ($NtnxHostLookup."$($NtnxVM.hostUuid)") {
+                                        $null { '--' }
+                                        default { $NtnxHostLookup."$($NtnxVM.hostUuid)" }
+                                    }
+                                    'Memory' = "$([math]::Round(($NtnxVM.memoryCapacityInBytes) / 1073741824, 0)) GiB"
+                                    'Cores' = $NtnxVM.numVCpus
+                                    'Network Adapters' = $NtnxVM.numNetworkAdapters
+                                    'Operating System' = Switch ($NtnxVM.guestOperatingSystem) {
+                                        $null { '--' }
+                                        default { $NtnxVM.guestOperatingSystem }
+                                    } 
+                                    'IP Addresses' = $NtnxVM.ipAddresses -join ', '
+                                    'Storage Container' = $NtnxContainerLookup."$($NtnxVM.containerUuids)"
+                                    'Virtual Disks' = ($NtnxVM.nutanixVirtualDisks).Count
+                                    'Disk Capacity' = "$([math]::Round(($NtnxVM.diskCapacityinBytes) / 1073741824, 2)) GiB"
+                                    #ToDo: Total Logical Capacity
+                                    'NGT Enabled' = Switch ($NtnxVM.nutanixGuestTools.enabled) {
+                                        $true { 'Yes' }
+                                        $false { 'No' }
+                                    }
+                                    'NGT Mounted' = Switch ($NtnxVM.nutanixGuestTools.toolsMounted) {
+                                        $true { 'Yes' }
+                                        $false { 'No' }
+                                    }
+                                    'Protection Domain' = Switch ($NtnxVM.protectionDomainName) {
+                                        $null { '--' }
+                                        default { $NtnxVM.protectionDomainName }
+                                    }
+                                }
+                                if ($Healthcheck.VM.PowerState) {
+                                    $VirtualMachines | Where-Object { $_.'Power State' -eq 'off' } | Set-Style -Style Warning -Property 'Power State'
+                                }
+                                $TableParams = @{
+                                    Name = "$($NtnxVM.vmName) - $($NtnxCluster.Name)"
+                                    List = $true
+                                    ColumnWidths = 50, 50
+                                }
+                                if ($Options.ShowTableCaptions) {
+                                    $TableParams['Caption'] = "- $($TableParams.Name)"
+                                }
+                                $VirtualMachines | Table @TableParams
+
+                                #region VM Virtual Disks
+                                $NtnxVMVirtualDisks = $NtnxVirtualDisks | Where-Object {$_.attachedVMName -eq $($NtnxVM.vmName)} | Sort-Object diskAddress
+                                if ($NtnxVMVirtualDisks) {
+                                    Section -Style Heading4 'Virtual Disks' {
+                                        $VMVirtualDisks = foreach ($NtnxVMVirtualDisk in $NtnxVMVirtualDisks) {
+                                            [PSCustomObject]@{
+                                                'Virtual Disk' = $NtnxVMVirtualDisk.diskAddress
+                                                'Total Capacity' = "$([math]::Round(($NtnxVMVirtualDisk.diskCapacityInBytes) / 1073741824, 0)) GiB" 
+                                                #ToDo: Total Logical Capacity 
+                                                #ToDo: Add Container results for Hyper-V
+                                                'Container' = Switch ( $NtnxVM.hypervisorType ) {
+                                                    'kKVM' { $NtnxContainerLookup."$($NtnxVMVirtualDisk.containerUuid)" }
+                                                    'kVMware' { ($NtnxVMVirtualDisk.nutanixNFSFilePath).Split('/')[1] }
+                                                }
+                                                #'Flash Mode'
+                                            }
+                                        }
+                                        $TableParams = @{
+                                            Name = "Virtual Disks - $($NtnxVM.vmName)"
+                                            ColumnWidths = 33, 33, 34
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $VMVirtualDisks | Table @TableParams
+                                    }
+                                }
+                                #endregion VM Virtual Disks
+
+                                #region VM NICs
+                                $NtnxVMNics = (Get-NtnxApi -Version 2 -Uri $('/vms/' + $($NtnxVM.uuid) + '/nics')).entities | Sort-Object network_uuid
+                                if ($NtnxVMNics) {
+                                    Section -Style Heading4 'VM NICs' {
+                                        $VMNics = foreach ($NtnxVMNic in $NtnxVMNics) {
+                                            [PSCustomObject]@{
+                                                #ToDo: Find a way to get the 'Port Name' for VMware
+                                                'Network Name' = $NtnxNetworkLookup."$($NtnxVMNic.network_uuid)"
+                                                'Adapter Type' = $NtnxVMNic.adapter_type 
+                                                'VLAN ID' = $NtnxNetworkVlanLookup."$($NtnxVMNic.network_uuid)"
+                                                'MAC Address' = $NtnxVMNic.mac_address
+                                                'IP Address' = ($NtnxVMNic.ip_address | Sort-Object) -join ', '
+                                                'IP Addresses' = ($NtnxVMNic.ip_addresses | Sort-Object) -join ', '
+                                                'Connected' = Switch ($NtnxVMNic.is_connected) {
+                                                    $true { 'Yes' }
+                                                    $false { 'No' }
+                                                }
+                                            }
+                                        }
+                                        if ($Healthcheck.VM.NicConnectionState) {
+                                            $VMNics | Where-Object { $_.'Connected' -ne 'Yes' } | Set-Style -Style Warning #-Property 'Connected'
+                                        }
+                                        $TableParams = @{
+                                            Name = "VM NICs - $($NtnxVM.vmName)"
+                                            
+                                        }
+                                        # Build different table format based on hypervisor type
+                                        Switch ( $NtnxVM.hypervisorType ) {
+                                            'kVMware' {
+                                                $TableParams['Columns'] = 'Adapter Type', 'MAC Address', 'IP Address', 'Connected'
+                                                $TableParams['ColumnWidths'] = 25, 25, 25, 25
+                                            }
+                                            'kKVM' {
+                                                $TableParams['Columns'] = 'Network Name', 'VLAN ID', 'MAC Address', 'IP Addresses', 'Connected'
+                                                $TableParams['ColumnWidths'] = 20, 20, 20, 20, 20
+                                            }
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $VMNics | Sort-Object 'Network Name' | Table @TableParams
+                                    }
+                                }
+                                #endregion VM NICs
+
+                                #region VM Snapshots
+                                $NtnxVMSnapshots = $NtnxSnapshots | Where-Object {$_.vm_uuid -eq $NtnxVM.uuid}
+                                if ($NtnxVMSnapshots) {
+                                    Section -Style Heading3 'VM Snapshots' {
+                                        $VMSnapshots = foreach ($NtnxVMSnapshot in $NtnxVMSnapshots) {
+                                            $NtnxVMSnapshotTime = $NtnxVMSnapshot.created_time/1000
+                                            $NtnxVMSnapshotDateTime = (Get-Date '1/1/1970').AddMilliseconds($NtnxVMSnapshotTime)
+                                            [PSCustomObject]@{
+                                                'Create Time' = $NtnxVMSnapshotDateTime
+                                                'Snapshot Name' = $NtnxVMSnapshot.snapshot_name
+                                                #'VM' = $NtnxVirtualMachineLookup."$($NtnxVMSnapshot.vm_uuid)"
+                                            }
+                                        }
+                                        $TableParams = @{
+                                            Name = "VM Snapshots - $($NtnxVM.vmName)"
+                                        }
+                                        if ($Options.ShowTableCaptions) {
+                                            $TableParams['Caption'] = "- $($TableParams.Name)"
+                                        }
+                                        $VMSnapshots | Table @TableParams
+                                    }
+                                }
+                                #endregion VM Snapshots
+                            }
+                        }
+                    }
+                    #endregion VM Detailed Information
                 }
             }
             #endregion Virtual Machines Section
@@ -620,14 +1192,23 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $ProtectionDomains = foreach ($NtnxProtectionDomain in $NtnxProtectionDomains) {
                                 [PSCustomObject]@{
                                     'Name' = $NtnxProtectionDomain.name 
-                                    'Active' = $NtnxProtectionDomain.active 
+                                    'Active' = Switch ($NtnxProtectionDomain.active) {
+                                        $true { 'Yes' }
+                                        $false { 'No' }
+                                    }
                                     'Remote Site(s)' = $NtnxProtectionDomain.replication_links.remote_site_name 
                                     'Pending Replications' = $NtnxProtectionDomain.pending_replication_count 
                                     'Ongoing Replications' = $NtnxProtectionDomain.ongoing_replication_count 
                                     'Written Bytes' = $NtnxProtectionDomain.total_user_written_bytes     
                                 }
                             }
-                            $ProtectionDomains | Sort-Object 'Name' | Table -Name 'Protection Domains' 
+                            $TableParams = @{
+                                Name = "Protection Domains - $($NtnxCluster.Name)"
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $ProtectionDomains | Sort-Object 'Name' | Table @TableParams 
                         }
                     }
                     #endregion Protection Domains
@@ -645,7 +1226,13 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'Minutes to Complete' = [math]::Round(($NtnxPDReplication.replication_time_to_complete_secs) / 60, 2)
                                 }
                             }
-                            $ProtectionDomainReplications | Sort-Object 'Name' | Table -Name 'Protection Domain Replication' 
+                            $TableParams = @{
+                                Name = "Protection Domain Replication - $($NtnxCluster.Name)"
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $ProtectionDomainReplications | Sort-Object 'Name' | Table @TableParams 
                         }
                     }
                     #endregion Protection Domain Replication                   
@@ -663,27 +1250,41 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'Size in Bytes' = $NtnxDrSnapshot.size_in_bytes
                                 }
                             }
-                            $ProtectionDomainSnapshots | Sort-Object 'Protection Domain' | Table -Name 'Protection Domain Snapshots' 
+                            $TableParams = @{
+                                Name = "Protection Domain Snapshots - $($NtnxCluster.Name)"
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $ProtectionDomainSnapshots | Sort-Object 'Protection Domain' | Table @TableParams
                         }
                     }
-                    #endregion Protection Domain Snapshots                   
+                    #endregion Protection Domain Snapshots
 
                     #region Unprotected VMs
-                    $NtnxUnprotectedVMs = $NtnxVMs | Where-Object { ($_.controllervm -eq $false) -and ($_.runningOnNdfs -eq $false) }
                     if ($NtnxUnprotectedVMs) {
                         Section -Style Heading3 'Unprotected VMs' {
                             $UnprotectedVMs = foreach ($NtnxUnprotectedVM in $NtnxUnprotectedVMs) {
                                 [PSCustomObject]@{
-                                    'VM Name' = $NtnxUnprotectedVM.vmName 
-                                    'Power State' = $TextInfo.ToTitleCase($NtnxUnprotectedVM.powerState)
-                                    'Operating System' = $NtnxUnprotectedVM.guestOperatingSystem 
-                                    'CPUs' = $NtnxUnprotectedVM.numVCPUs 
-                                    'NICs' = $NtnxUnprotectedVM.numNetworkAdapters 
-                                    'Disk Capacity' = "$([math]::Round(($NtnxUnprotectedVM.diskCapacityinBytes) / 1GB, 2)) GB" 
-                                    'Host' = $NtnxUnprotectedVM.hostName
+                                    'VM Name' = $NtnxUnprotectedVM.vm_name 
+                                    'Power State' = $TextInfo.ToTitleCase($NtnxUnprotectedVM.power_state)
+                                    'Operating System' = Switch ($NtnxUnprotectedVM.guest_operating_system) {
+                                        $null { '--' }
+                                        default { $NtnxUnprotectedVM.guest_operating_system }
+                                    }
+                                    'Cores' = $NtnxUnprotectedVM.num_vcpus
+                                    'Network Adapters' = $NtnxUnprotectedVM.num_network_adapters 
+                                    'Disk Capacity' = "$([math]::Round(($NtnxUnprotectedVM.disk_capacity_in_bytes) / 1073741824, 2)) GiB" 
+                                    'Host' = $NtnxUnprotectedVM.host_name
                                 }
                             }
-                            $UnprotectedVMs | Sort-Object 'VM Name' | Table -Name 'Unprotected VMs' 
+                            $TableParams = @{
+                                Name = "Unprotected VMs - $($NtnxCluster.Name)"
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $UnprotectedVMs | Sort-Object 'VM Name' | Table @TableParams 
                         }
                     }
                     #endregion Unprotected VMs
@@ -718,7 +1319,24 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     }                    
                                 }
                             }
-                            $RemoteSites | Sort-Object 'Name' | Table -Name 'Remote Sites' -List -ColumnWidths 50, 50
+                            if ($Healthcheck.DataProtection.CompressOnWire) {
+                                $RemoteSites | Where-Object { $_.'Compress On Wire' -eq 'On' } | Set-Style -Style Warning -Property 'Compress On Wire'
+                            }
+                            if ($Healthcheck.DataProtection.CompressOnWire) {
+                                $RemoteSites | Where-Object { $_.'Enable Proxy' -eq 'On' } | Set-Style -Style Warning -Property 'Enable Proxy'
+                            }
+                            if ($Healthcheck.DataProtection.CompressOnWire) {
+                                $RemoteSites | Where-Object { $_.'Bandwidth Throttling' -eq 'On' } | Set-Style -Style Warning -Property 'Bandwidth Throttling'
+                            }
+                            $TableParams = @{
+                                Name = "Remote Sites - $($NtnxCluster.Name)"
+                                List = $true
+                                ColumnWidths = 50, 50
+                            }
+                            if ($Options.ShowTableCaptions) {
+                                $TableParams['Caption'] = "- $($TableParams.Name)"
+                            }
+                            $RemoteSites | Sort-Object 'Name' | Table @TableParams
                         }
                     }
                     #endregion Remote Sites

@@ -28,8 +28,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     $TextInfo = (Get-Culture).TextInfo
 
     foreach ($NtnxPE in $Target) {
-
         #region API Collections
+        Write-PScriboMessage "Performing API reference calls"
         $NtnxCluster = Get-NtnxApi -Version 2 -Uri '/cluster'
         $NtnxVMs = (Get-NtnxApi -Version 1 -Uri '/vms').entities
         $NtnxVirtualDisks = (Get-NtnxApi -Version 1 -Uri '/virtual_disks').entities
@@ -62,16 +62,19 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         #endregion API Collections
 
         #region Lookups
+        Write-PScriboMessage "Creating Container Hashtable Lookup"
         $NtnxContainerLookup = @{}
         foreach ($NtnxContainer in $NtnxContainers) {
             $NtnxContainerLookup.($NtnxContainer.storage_container_uuid) = $NtnxContainer.Name
         }
 
+        Write-PScriboMessage "Creating Host Hashtable Lookup"
         $NtnxHostLookup = @{}
         foreach ($NtnxHost in $NtnxHosts) {
             $NtnxHostLookup.($NtnxHost.uuid) = $NtnxHost.hypervisor_address
         }
 
+        Write-PScriboMessage "Creating Network Hashtable Lookup"
         $NtnxNetworkLookup = @{}
         $NtnxNetworkVlanLookup = @{}
         foreach ($NtnxNetwork in $NtnxNetworks) {
@@ -79,6 +82,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             $NtnxNetworkVlanLookup.($NtnxNetwork.uuid) = $NtnxNetwork.vlan_id
         }
 
+        Write-PScriboMessage "Creating Storage Pool Hashtable Lookup"
         $NtnxStoragePoolLookup = @{}
         foreach ($NtnxStoragePool in $NtnxStoragePools) {
             foreach ($DiskUuid in $NtnxStoragePool.diskUuids) {
@@ -87,16 +91,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         }
 
         # Excludes CVMs and VMs not running on a container
+        Write-PScriboMessage "Creating VM Hashtable Lookup"
         $NtnxVirtualMachines = $NtnxVMs | Where-Object { ($_.controllervm -eq $false) -and ($_.runningOnNdfs -eq $true) } | Sort-Object vmName
         $NtnxVirtualMachineLookup = @{}
         foreach ($NtnxVirtualMachine in $NtnxVirtualMachines) {
             $NtnxVirtualMachineLookup.($NtnxVirtualMachine.uuid) = $NtnxVirtualMachine.vmName
         }
         #endregion Lookups
-
-        Section -Style Heading1 $NtnxCluster.name {
+        Section -Style Heading1 $($NtnxCluster.Name) {
             Write-PScriboMessage "Cluster InfoLevel set at $($InfoLevel.Cluster)."
-
             #region Cluster Section
             if ($InfoLevel.Cluster -gt 0) {
                 if ($NtnxCluster) { 
@@ -423,7 +426,10 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Licensing' {
                             $Licensing = [PSCustomObject]@{
                                 'Cluster' = $NtnxCluster.name 
-                                'License' = $NtnxLicense.category
+                                'License' = ($NtnxLicense.category).Replace('_',' ')
+                            }
+                            if ($Healthcheck.System.Licensing) {
+                                $Licensing | Where-Object { $_.'License' -eq 'No License' } | Set-Style -Style Warning -Property 'License'
                             }
                             $TableParams = @{
                                 Name = "Licensing - $($NtnxCluster.Name)"
@@ -626,6 +632,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     }
                                     $TableParams = @{
                                         Name = "Host Network Specifications - $($NtnxCluster.Name)"
+                                        ColumnWidths = 34, 33, 33
                                     }
                                     if ($Report.ShowTableCaptions) {
                                         $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -687,6 +694,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             $TableParams = @{
                                                 Name = "Host Disk Specifications - $($NtnxCluster.Name)"
                                                 Columns = 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
+                                                ColumnWidths = 10, 10, 27, 10, 10, 14, 10, 10
                                             }
                                             if ($Report.ShowTableCaptions) {
                                                 $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -1134,6 +1142,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         $TableParams = @{
                                             Name = "VM Snapshots - $($NtnxVM.vmName)"
+                                            ColumnWidths = 50, 50
                                         }
                                         if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -1172,6 +1181,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Protection Domains - $($NtnxCluster.Name)"
+                                ColumnWidths = 36, 10, 15, 13, 13, 13
                             }
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -1248,6 +1258,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Unprotected VMs - $($NtnxCluster.Name)"
+                                ColumnWidths = 22, 10, 19, 10, 10, 10, 19
                             }
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"

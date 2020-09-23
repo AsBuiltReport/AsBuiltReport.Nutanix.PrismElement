@@ -1,5 +1,16 @@
 # :arrows_counterclockwise: Nutanix Prism Element As Built Report Changelog
 
+## [1.1.1] 2020-09-24
+### Added
+- Added system licensing health check
+
+### Fixed
+- Improved table formatting
+- Improved verbose logging
+
+### Removed
+- Removed support for PowerShell Core / 7 due to a [known issue](https://github.com/PowerShell/PowerShell/issues/12993).
+
 ## [1.1.0] 2020-07-16
 ### Added
 - Added Nutanix logo to the cover page

@@ -28,7 +28,8 @@
             "PowerState": true
         },
         "System": {
-            "ImageState": false
+            "ImageState": false,
+            "Licensing": true
         },
         "Hardware": {
             "DiskStatus": true,

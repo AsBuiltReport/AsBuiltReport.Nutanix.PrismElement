@@ -42,9 +42,11 @@ The Nutanix Prism Element As Built Report supports the following AOS versions;
 ### **PowerShell**
 This report is compatible with the following PowerShell versions;
 
-| Windows PowerShell 5.1 |  PowerShell Core   |    PowerShell 7    |
-|:----------------------:|:------------------:|:------------------:|
-|   :white_check_mark:   | :white_check_mark: | :white_check_mark: |
+| Windows PowerShell 5.1 | PowerShell Core | PowerShell 7 |
+|:----------------------:|:---------------:|:------------:|
+|   :white_check_mark:   |   :x:    |  :x:  |
+
+:warning: PowerShell Core / 7 is not currenty supported due to a [known issue](https://github.com/PowerShell/PowerShell/issues/12993).
 
 ## :wrench: System Requirements
 
@@ -160,9 +162,10 @@ The **CVM** schema is used to configure health checks for the Nutanix Controller
 #### System
 The **System** schema is used to configure health checks for the entire system.
 
-| Sub-Schema | Setting    | Default | Description                                      | Highlight                                                                              |
-|------------|------------|---------|--------------------------------------------------|----------------------------------------------------------------------------------------|
-| ImageState | true/false | false   | Highlights images which are in an inactive state | ![Warning](https://placehold.it/15/FFBC0B/000000?text=+) Image is in an inactive state |
+| Sub-Schema | Setting    | Default | Description                                        | Highlight                                                                                     |
+|------------|------------|---------|----------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| ImageState | true/false | false   | Highlights images which are in an inactive state   | ![Warning](https://placehold.it/15/FFBC0B/000000?text=+) Image is in an inactive state        |
+| Licensing  | true/false | true    | Highlights if no license is applied to the cluster | ![Warning](https://placehold.it/15/FFBC0B/000000?text=+) No license is applied to the cluster |
 
 #### Hardware
 The **Hardware** schema is used to configure health checks for Nutanix hardware.
@@ -216,5 +219,5 @@ PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110' -
 PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110','172.16.30.130' -Username 'admin' -Password 'nutanix/4u' -StyleFilePath 'C:\Scripts\Styles\MyCustomStyle.ps1'
 
 # Generate a Nutanix Prism Element As Built Report for Nutanix cluster '172.16.30.110' using specified credentials. Export report to HTML & DOCX formats. Use default report style. Reports are saved to the user profile folder by default. Attach and send reports via e-mail.
-PS C:\> New-AsBuiltReport -Report VMware.vSphere -Target '172.16.30.110' -Username 'admin' -Password 'nutanix/4u' -Format Html,Word -OutputFolderPath 'C:\Users\Tim\Documents' -SendEmail
+PS C:\> New-AsBuiltReport -Report Nutanix.PrismElement -Target '172.16.30.110' -Username 'admin' -Password 'nutanix/4u' -Format Html,Word -OutputFolderPath 'C:\Users\Tim\Documents' -SendEmail
 ```

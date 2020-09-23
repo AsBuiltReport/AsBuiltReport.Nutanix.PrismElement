@@ -64,7 +64,6 @@ function Get-NtnxApi {
 
     Process {
         Try {
-            
             Switch ($Version) {
                 '1' { Invoke-RestMethod -Method Get -Uri ($api_v1 + $uri) -Headers $headers }
                 '2' { Invoke-RestMethod -Method Get -Uri ($api_v2 + $uri) -Headers $headers }

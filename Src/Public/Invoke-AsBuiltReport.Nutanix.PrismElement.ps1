@@ -1,11 +1,11 @@
 function Invoke-AsBuiltReport.Nutanix.PrismElement {
     <#
     .SYNOPSIS  
-        PowerShell script to document the configuration of Nutanix Prism infrastucture in Word/HTML/XML/Text formats
+        PowerShell script to document the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats
     .DESCRIPTION
-        Documents the configuration of Nutanix Prism infrastucture in Word/HTML/XML/Text formats using PScribo.
+        Documents the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats using PScribo.
     .NOTES
-        Version:        1.1.0
+        Version:        1.1.1
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -17,58 +17,19 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
 
     param (
         [String[]] $Target,
-        [PSCredential] $Credential,
-        [String]$StylePath
+        [PSCredential] $Credential
     )
 
-    # Import JSON Configuration for Options and InfoLevel
+    # Import Report Configuration
+    $Report = $ReportConfig.Report
     $InfoLevel = $ReportConfig.InfoLevel
     $Options = $ReportConfig.Options
     # Used to set values to TitleCase where required
     $TextInfo = (Get-Culture).TextInfo
 
-    # If custom style not set, use default style
-    if (!$StylePath) {
-        & "$PSScriptRoot\..\..\AsBuiltReport.Nutanix.PrismElement.Style.ps1"
-    }
-
-    #region Workaround for SelfSigned Cert an force TLS 1.2
-    if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
-        $certCallback = @"
-        using System;
-        using System.Net;
-        using System.Net.Security;
-        using System.Security.Cryptography.X509Certificates;
-        public class ServerCertificateValidationCallback
-        {
-            public static void Ignore()
-            {
-                if(ServicePointManager.ServerCertificateValidationCallback ==null)
-                {
-                    ServicePointManager.ServerCertificateValidationCallback += 
-                        delegate
-                        (
-                            Object obj, 
-                            X509Certificate certificate, 
-                            X509Chain chain, 
-                            SslPolicyErrors errors
-                        )
-                        {
-                            return true;
-                        };
-                }
-            }
-        }
-"@
-        Add-Type $certCallback
-    }
-    [ServerCertificateValidationCallback]::Ignore()
-    [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-    #endregion Workaround for SelfSigned Cert an force TLS 1.2
-
     foreach ($NtnxPE in $Target) {
-
         #region API Collections
+        Write-PScriboMessage "Performing API reference calls"
         $NtnxCluster = Get-NtnxApi -Version 2 -Uri '/cluster'
         $NtnxVMs = (Get-NtnxApi -Version 1 -Uri '/vms').entities
         $NtnxVirtualDisks = (Get-NtnxApi -Version 1 -Uri '/virtual_disks').entities
@@ -101,16 +62,19 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         #endregion API Collections
 
         #region Lookups
+        Write-PScriboMessage "Creating Container Hashtable Lookup"
         $NtnxContainerLookup = @{}
         foreach ($NtnxContainer in $NtnxContainers) {
             $NtnxContainerLookup.($NtnxContainer.storage_container_uuid) = $NtnxContainer.Name
         }
 
+        Write-PScriboMessage "Creating Host Hashtable Lookup"
         $NtnxHostLookup = @{}
         foreach ($NtnxHost in $NtnxHosts) {
             $NtnxHostLookup.($NtnxHost.uuid) = $NtnxHost.hypervisor_address
         }
 
+        Write-PScriboMessage "Creating Network Hashtable Lookup"
         $NtnxNetworkLookup = @{}
         $NtnxNetworkVlanLookup = @{}
         foreach ($NtnxNetwork in $NtnxNetworks) {
@@ -118,6 +82,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             $NtnxNetworkVlanLookup.($NtnxNetwork.uuid) = $NtnxNetwork.vlan_id
         }
 
+        Write-PScriboMessage "Creating Storage Pool Hashtable Lookup"
         $NtnxStoragePoolLookup = @{}
         foreach ($NtnxStoragePool in $NtnxStoragePools) {
             foreach ($DiskUuid in $NtnxStoragePool.diskUuids) {
@@ -126,14 +91,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         }
 
         # Excludes CVMs and VMs not running on a container
+        Write-PScriboMessage "Creating VM Hashtable Lookup"
         $NtnxVirtualMachines = $NtnxVMs | Where-Object { ($_.controllervm -eq $false) -and ($_.runningOnNdfs -eq $true) } | Sort-Object vmName
         $NtnxVirtualMachineLookup = @{}
         foreach ($NtnxVirtualMachine in $NtnxVirtualMachines) {
             $NtnxVirtualMachineLookup.($NtnxVirtualMachine.uuid) = $NtnxVirtualMachine.vmName
         }
         #endregion Lookups
-
-        Section -Style Heading1 $NtnxCluster.name {
+        Section -Style Heading1 $($NtnxCluster.Name) {
+            Write-PScriboMessage "Cluster InfoLevel set at $($InfoLevel.Cluster)."
             #region Cluster Section
             if ($InfoLevel.Cluster -gt 0) {
                 if ($NtnxCluster) { 
@@ -175,7 +141,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $ClusterSummary | Table @TableParams
@@ -200,7 +166,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $Networks | Table @TableParams
@@ -226,7 +192,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 Name = "Controller VMs - $($NtnxCluster.Name)"
                                 ColumnWidths = 28, 10, 20, 20, 10, 12
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $ControllerVMs | Sort-Object Host | Table @TableParams
@@ -244,7 +210,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     Name = "Witness Server - $($NtnxCluster.Name)"
                                     ColumnWidths = 50, 50
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $Witness | Table @TableParams
@@ -257,6 +223,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #endregion Cluster Section
 
             #region System Section
+            Write-PScriboMessage "System InfoLevel set at $($InfoLevel.System)."
             if ($InfoLevel.System -gt 0) {
                 Section -Style Heading2 'System' {
                     #region Global Filesystem Whitelists
@@ -270,7 +237,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $NtnxNfsWhitelists | Table @TableParams
@@ -290,7 +257,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     List = $true
                                     ColumnWidths = 50, 50
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $AuthenticationTypes | Table @TableParams
@@ -310,7 +277,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         List = $true
                                         ColumnWidths = 50, 50
                                     }
-                                    if ($Options.ShowTableCaptions) {
+                                    if ($Report.ShowTableCaptions) {
                                         $TableParams['Caption'] = "- $($TableParams.Name)"
                                     }
                                     $DirectoryList | Table @TableParams
@@ -344,7 +311,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $TableParams = @{
                                 Name = "Image Configuration - $($NtnxCluster.Name)"
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $Images | Table @TableParams
@@ -374,7 +341,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $SmtpConfig | Table @TableParams
@@ -402,7 +369,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $AlertConfig | Table @TableParams
@@ -436,7 +403,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $SnmpConfig | Table @TableParams
@@ -459,13 +426,16 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Licensing' {
                             $Licensing = [PSCustomObject]@{
                                 'Cluster' = $NtnxCluster.name 
-                                'License' = $NtnxLicense.category
+                                'License' = ($NtnxLicense.category).Replace('_',' ')
+                            }
+                            if ($Healthcheck.System.Licensing) {
+                                $Licensing | Where-Object { $_.'License' -eq 'No License' } | Set-Style -Style Warning -Property 'License'
                             }
                             $TableParams = @{
                                 Name = "Licensing - $($NtnxCluster.Name)"
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $Licensing | Table @TableParams
@@ -497,7 +467,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         Name = "Licensing Features - $($NtnxCluster.Name)"
                                         ColumnWidths = 50, 50
                                     }
-                                    if ($Options.ShowTableCaptions) {
+                                    if ($Report.ShowTableCaptions) {
                                         $TableParams['Caption'] = "- $($TableParams.Name)"
                                     }
                                     $LicensingFeatures | Sort-Object 'Feature' | Table @TableParams
@@ -530,7 +500,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     #ColumnWidths = 50, 50
                                     ColumnWidths = 25, 25, 25, 25
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $HealthChecks | Table @TableParams
@@ -565,7 +535,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             List = $true
                                             ColumnWidths = 50, 50
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $HealthChecksFull | Table @TableParams
@@ -581,6 +551,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #endregion System Section
             
             #region Hosts Section
+            Write-PScriboMessage "Hosts InfoLevel set at $($InfoLevel.Hosts)."
             if (($InfoLevel.Hosts -gt 0) -and ($NtnxHosts)) {             
                 Section -Style Heading2 'Hosts' {
                     #region Host Hardware Summary
@@ -598,7 +569,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 Name = "Hardware Summary - $($NtnxCluster.Name)"
                                 ColumnWidths = 25, 25, 25, 25
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $NtnxHostSummary | Table @TableParams
@@ -642,7 +613,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         List = $true
                                         ColumnWidths = 50, 50
                                     }
-                                    if ($Options.ShowTableCaptions) {
+                                    if ($Report.ShowTableCaptions) {
                                         $TableParams['Caption'] = "- $($TableParams.Name)"
                                     }
                                     $NtnxHostConfig | Table @TableParams
@@ -661,8 +632,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     }
                                     $TableParams = @{
                                         Name = "Host Network Specifications - $($NtnxCluster.Name)"
+                                        ColumnWidths = 34, 33, 33
                                     }
-                                    if ($Options.ShowTableCaptions) {
+                                    if ($Report.ShowTableCaptions) {
                                         $TableParams['Caption'] = "- $($TableParams.Name)"
                                     }
                                     $NtnxHostNetworks | Table @TableParams
@@ -704,7 +676,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         if ($Healthcheck.Hardware.DiskMode) {
                                             $HostDisks | Where-Object { $_.'Mode' -ne 'Online' } | Set-Style -Style Critical -Property 'Mode'
                                         }  
-                                        if ($InfoLevel.Hosts -gt 2) {
+                                        if ($InfoLevel.Hosts -ge 3) {
                                             foreach ($NtnxHostDisk in $HostDisks) {
                                                 Section -Style Heading5 "Disk $($NtnxHostDisk.Location)" {
                                                     $TableParams = @{
@@ -712,7 +684,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                         List = $true
                                                         ColumnWidths = 50, 50
                                                     }
-                                                    if ($Options.ShowTableCaptions) {
+                                                    if ($Report.ShowTableCaptions) {
                                                         $TableParams['Caption'] = "- $($TableParams.Name)"
                                                     }
                                                     $NtnxHostDisk | Table @TableParams
@@ -722,8 +694,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             $TableParams = @{
                                                 Name = "Host Disk Specifications - $($NtnxCluster.Name)"
                                                 Columns = 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
+                                                ColumnWidths = 10, 10, 27, 10, 10, 14, 10, 10
                                             }
-                                            if ($Options.ShowTableCaptions) {
+                                            if ($Report.ShowTableCaptions) {
                                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                                             }
                                             $HostDisks | Table @TableParams
@@ -749,7 +722,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         $TableParams = @{
                                             Name = "Host Datastores - $($NtnxCluster.Name)"
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $NtnxHostDatastores | Sort-Object 'Datastore' | Table @TableParams
@@ -767,6 +740,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #endregion Hosts Section
 
             #region Storage Section
+            Write-PScriboMessage "Storage InfoLevel set at $($InfoLevel.Storage)."
             if ($InfoLevel.Storage -gt 0) {
                 Section -Style Heading2 'Storage' {
                     #region Containers
@@ -822,7 +796,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             List = $true
                                             ColumnWidths = 50, 50
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $Container | Table @TableParams
@@ -833,7 +807,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     Name = "Containers - $($NtnxCluster.Name)"
                                     Columns = 'Container' , 'Replication Factor', 'Compression', 'Cache Deduplication', 'Capacity Deduplication', 'Erasure Coding', 'Free Capacity (Logical) TiB', 'Used Capacity TiB', 'Maximum Capacity TiB' 
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $Containers | Table @TableParams
@@ -862,7 +836,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     Name = "Volume Groups - $($NtnxCluster.Name)"
                                     ColumnWidths = 22, 16, 12, 25, 25
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $VolumeGroups | Table @TableParams
@@ -884,7 +858,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             List = $true
                                             ColumnWidths = 50, 50
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $VolumeGroup | Table @TableParams
@@ -904,7 +878,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                     Name = "Virtual Disks - $($NtnxVolumeGroup.Name)"
                                                     ColumnWidths = 15, 15, 35, 35
                                                 }
-                                                if ($Options.ShowTableCaptions) {
+                                                if ($Report.ShowTableCaptions) {
                                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                                 }
                                                 $NtnxVirtualGroupDisks | Table @TableParams
@@ -933,7 +907,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 Name = "Storage Pools - $($NtnxCluster.Name)"
                                 ColumnWidths = 22, 12, 22, 22, 22
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $StoragePools | Sort-Object 'Storage Pool' | Table @TableParams
@@ -966,7 +940,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     Columns = 'Datastore', 'Host', 'Container', 'Free Capacity TiB', 'Used Capacity TiB', 'Maximum Capacity TiB', 'Number of VMs'
                                     ColumnWidths = 15, 15, 15, 15, 15, 15, 10
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $NfsDatastores | Sort-Object Datastore, Host | Table @TableParams
@@ -978,7 +952,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             List = $true
                                             ColumnWidths = 50, 50
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $NfsDatastore | Sort-Object Datastore, Host | Table @TableParams
@@ -993,6 +967,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #endregion Storage Section
 
             #region Virtual Machines Section
+            Write-PScriboMessage "VM InfoLevel set at $($InfoLevel.VM)."
             if (($InfoLevel.VM -gt 0) -and ($NtnxVirtualMachines)) {
                 Section -Style Heading2 'Virtual Machines' {
                     #region VM Summary Information
@@ -1014,7 +989,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             Name = "Virtual Machines - $($NtnxCluster.Name)"
                             ColumnWidths = 24, 11, 11, 11, 28, 15
                         }
-                        if ($Options.ShowTableCaptions) {
+                        if ($Report.ShowTableCaptions) {
                             $TableParams['Caption'] = "- $($TableParams.Name)"
                         }
                         $VMSummary | Table @TableParams
@@ -1073,7 +1048,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     List = $true
                                     ColumnWidths = 50, 50
                                 }
-                                if ($Options.ShowTableCaptions) {
+                                if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
                                 }
                                 $VirtualMachines | Table @TableParams
@@ -1099,7 +1074,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             Name = "Virtual Disks - $($NtnxVM.vmName)"
                                             ColumnWidths = 33, 33, 34
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $VMVirtualDisks | Table @TableParams
@@ -1144,7 +1119,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                 $TableParams['ColumnWidths'] = 20, 20, 20, 20, 20
                                             }
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $VMNics | Sort-Object 'Network Name' | Table @TableParams
@@ -1167,8 +1142,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         $TableParams = @{
                                             Name = "VM Snapshots - $($NtnxVM.vmName)"
+                                            ColumnWidths = 50, 50
                                         }
-                                        if ($Options.ShowTableCaptions) {
+                                        if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
                                         $VMSnapshots | Table @TableParams
@@ -1184,6 +1160,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             #endregion Virtual Machines Section
 
             #region Data Protection Section
+            Write-PScriboMessage "Data Protection InfoLevel set at $($InfoLevel.DataProtection)."
             if (($InfoLevel.DataProtection -gt 0) -and ($NtnxProtectionDomains -or $NtnxRemoteSites)) {
                 Section -Style Heading2 'Data Protection' {
                     #region Protection Domains
@@ -1204,8 +1181,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Protection Domains - $($NtnxCluster.Name)"
+                                ColumnWidths = 36, 10, 15, 13, 13, 13
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $ProtectionDomains | Sort-Object 'Name' | Table @TableParams 
@@ -1229,7 +1207,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $TableParams = @{
                                 Name = "Protection Domain Replication - $($NtnxCluster.Name)"
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $ProtectionDomainReplications | Sort-Object 'Name' | Table @TableParams 
@@ -1253,7 +1231,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $TableParams = @{
                                 Name = "Protection Domain Snapshots - $($NtnxCluster.Name)"
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $ProtectionDomainSnapshots | Sort-Object 'Protection Domain' | Table @TableParams
@@ -1280,8 +1258,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Unprotected VMs - $($NtnxCluster.Name)"
+                                ColumnWidths = 22, 10, 19, 10, 10, 10, 19
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $UnprotectedVMs | Sort-Object 'VM Name' | Table @TableParams 
@@ -1333,7 +1312,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 List = $true
                                 ColumnWidths = 50, 50
                             }
-                            if ($Options.ShowTableCaptions) {
+                            if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $RemoteSites | Sort-Object 'Name' | Table @TableParams

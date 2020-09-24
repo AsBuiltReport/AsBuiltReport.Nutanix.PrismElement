@@ -4,6 +4,7 @@
         "Version": "1.0",
         "Status": "Released",
         "ShowCoverPageImage": true,
+        "ShowTableOfContents": true,
         "ShowHeaderFooter": true,
         "ShowTableCaptions": true
     },

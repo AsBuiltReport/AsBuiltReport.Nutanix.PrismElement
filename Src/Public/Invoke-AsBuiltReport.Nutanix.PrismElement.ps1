@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats using PScribo.
     .NOTES
-        Version:        1.1.1
+        Version:        1.1.2
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -496,8 +496,6 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     }
                                 $TableParams = @{
                                     Name = "Health Checks - $($NtnxCluster.Name)"
-                                    #List = $true
-                                    #ColumnWidths = 50, 50
                                     ColumnWidths = 25, 25, 25, 25
                                 }
                                 if ($Report.ShowTableCaptions) {
@@ -694,7 +692,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             $TableParams = @{
                                                 Name = "Host Disk Specifications - $($NtnxCluster.Name)"
                                                 Columns = 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
-                                                ColumnWidths = 10, 10, 27, 10, 10, 14, 10, 10
+                                                ColumnWidths = 10, 10, 27, 10, 10, 13, 10, 10
                                             }
                                             if ($Report.ShowTableCaptions) {
                                                 $TableParams['Caption'] = "- $($TableParams.Name)"

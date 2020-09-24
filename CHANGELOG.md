@@ -1,6 +1,6 @@
 # :arrows_counterclockwise: Nutanix Prism Element As Built Report Changelog
 
-## [1.1.1] 2020-09-24
+## [1.1.2] 2020-09-24
 ### Added
 - Added system licensing health check
 

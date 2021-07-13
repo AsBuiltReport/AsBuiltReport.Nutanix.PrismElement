@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats using PScribo.
     .NOTES
-        Version:        1.2.0
+        Version:        1.2.0.1
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman

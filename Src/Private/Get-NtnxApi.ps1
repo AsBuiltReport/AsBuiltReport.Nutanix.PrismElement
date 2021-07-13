@@ -12,7 +12,13 @@ function Get-NtnxApi {
             Mandatory = $true
         )]
         [ValidateNotNullOrEmpty()]
-        [String] $Uri
+        [String] $Uri,
+
+        [Parameter(
+            Mandatory = $false
+        )]
+        [ValidateNotNullOrEmpty()]
+        [Switch] $SkipCertificateCheck
     )
 
     Begin {
@@ -29,12 +35,12 @@ function Get-NtnxApi {
             {
                 if(ServicePointManager.ServerCertificateValidationCallback ==null)
                 {
-                    ServicePointManager.ServerCertificateValidationCallback += 
+                    ServicePointManager.ServerCertificateValidationCallback +=
                         delegate
                         (
-                            Object obj, 
-                            X509Certificate certificate, 
-                            X509Chain chain, 
+                            Object obj,
+                            X509Certificate certificate,
+                            X509Chain chain,
                             SslPolicyErrors errors
                         )
                         {
@@ -49,7 +55,7 @@ function Get-NtnxApi {
     [ServerCertificateValidationCallback]::Ignore()
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
     #endregion Workaround for SelfSigned Cert an force TLS 1.2
-    
+
         $username = $Credential.UserName
         $password = $Credential.GetNetworkCredential().Password
         $auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($username + ":" + $password ))
@@ -57,16 +63,24 @@ function Get-NtnxApi {
         $api_v2 = "https://" + $NtnxPE + ":9440/PrismGateway/services/rest/v2.0"
         $headers = @{
             'Accept'        = 'application/json'
-            'Authorization' = "Basic $auth" 
+            'Authorization' = "Basic $auth"
             'Content-Type'  = 'application/json'
         }
     }
 
     Process {
         Try {
-            Switch ($Version) {
-                '1' { Invoke-RestMethod -Method Get -Uri ($api_v1 + $uri) -Headers $headers }
-                '2' { Invoke-RestMethod -Method Get -Uri ($api_v2 + $uri) -Headers $headers }
+            # Check PowerShell version
+            if ($PSVersionTable.PSVersion.Major -ge "7") {
+                Switch ($Version) {
+                    '1' { Invoke-RestMethod -Method Get -Uri ($api_v1 + $uri) -Headers $headers -SkipCertificateCheck }
+                    '2' { Invoke-RestMethod -Method Get -Uri ($api_v2 + $uri) -Headers $headers -SkipCertificateCheck }
+                }
+            } else {
+                Switch ($Version) {
+                    '1' { Invoke-RestMethod -Method Get -Uri ($api_v1 + $uri) -Headers $headers }
+                    '2' { Invoke-RestMethod -Method Get -Uri ($api_v2 + $uri) -Headers $headers }
+                }
             }
         } Catch {
             Write-Verbose -Message "Error with API reference call to $(($URI).TrimStart('/'))"

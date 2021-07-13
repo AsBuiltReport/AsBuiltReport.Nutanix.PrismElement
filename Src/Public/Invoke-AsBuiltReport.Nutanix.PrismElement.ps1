@@ -1,16 +1,16 @@
 function Invoke-AsBuiltReport.Nutanix.PrismElement {
     <#
-    .SYNOPSIS  
+    .SYNOPSIS
         PowerShell script to document the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats using PScribo.
     .NOTES
-        Version:        1.1.2
+        Version:        1.2.0
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
         Credits:        Iain Brighton (@iainbrighton) - PScribo module
-                        
+
     .LINK
         https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement
     #>
@@ -46,7 +46,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         $NtnxImagesConfig = (Get-NtnxApi -Version 2 -Uri '/images').entities | Sort-Object Name
         $NtnxSmtpConfig = Get-NtnxApi -Version 2 -Uri '/cluster/smtp'
         $NtnxAlertsConfig = Get-NtnxApi -Version 2 -Uri 'alerts/configuration'
-        $NtnxSnmpConfig = Get-NtnxApi -Version 2 -Uri '/snmp'   
+        $NtnxSnmpConfig = Get-NtnxApi -Version 2 -Uri '/snmp'
         $NtnxLicense = Get-NtnxApi -Version 1 -Uri '/license/'
         $NtnxHealthChecks = (Get-NtnxApi -Version 2 -Uri '/health_checks').entities | Sort-Object name
         $NtnxDisks = (Get-NtnxApi -Version 2 -Uri '/disks').entities | Sort-Object Id
@@ -56,7 +56,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
         $NtnxPDReplications = (Get-NtnxApi -Version 2 -Uri '/protection_domains/replications').entities
         $NtnxDrSnapshots = (Get-NtnxApi -Version 2 -Uri '/remote_sites/dr_snapshots').entities
         $NtnxUnprotectedVMs = (Get-NtnxApi -Version 2 -Uri '/protection_domains/unprotected_vms').entities
-        if ($NtnxCluster.hypervisor_types -eq 'kVMware') {
+        if ($NtnxCluster.hypervisor_types -contains 'kVMware') {
             $NtnxDatastores = Get-NtnxApi -Version 2 -Uri '/storage_containers/datastores' | Sort-Object datastore_name
         }
         #endregion API Collections
@@ -102,22 +102,22 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
             Write-PScriboMessage "Cluster InfoLevel set at $($InfoLevel.Cluster)."
             #region Cluster Section
             if ($InfoLevel.Cluster -gt 0) {
-                if ($NtnxCluster) { 
+                if ($NtnxCluster) {
                     Section -Style Heading2 'Cluster' {
                         #region Hardware
                         Section -Style Heading3 'Hardware' {
                             $NtnxFtDomainStatus = $NtnxFtStatus | Where-Object { $_.domain_type -eq $NtnxCluster.fault_tolerance_domain_type }
                             $ClusterSummary = [PSCustomObject]@{
-                                'Cluster Name' = $NtnxCluster.Name 
+                                'Cluster Name' = $NtnxCluster.Name
                                 'Storage Type' = Switch ($NtnxCluster.storage_type) {
                                     'all_flash' { 'All Flash' }
                                     'all_hdd' { 'All HDD' }
                                     'mixed' { 'Hybrid' }
-                                } 
+                                }
                                 'Hypervisor Types' = ($NtnxCluster.hypervisor_types).TrimStart('k').Replace('Kvm', 'AHV').Replace('VMware', 'ESXi') -join ', '
                                 'Number of Nodes' = $NtnxCluster.num_nodes
                                 'Number of Blocks' = ($NtnxCluster.block_serials | Select-Object -Unique).count
-                                'Block Serial(s)' = ($NtnxCluster.block_serials | Sort-Object) -join ', ' 
+                                'Block Serial(s)' = ($NtnxCluster.block_serials | Sort-Object) -join ', '
                                 'Fault Tolerance Domain Type' = $TextInfo.ToTitleCase(($NtnxCluster.fault_tolerance_domain_type.ToLower()))
                                 'Data Resiliency Status' = if ($NtnxFtDomainStatus.component_fault_tolerance_status.static_configuration.number_of_failures_tolerable -gt 0) {
                                     "OK"
@@ -125,8 +125,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     "Critical"
                                 }
                                 "Desired Redundancy Factor" = "RF $($NtnxCluster.cluster_redundancy_state.desired_redundancy_factor)"
-                                'Version' = $NtnxCluster.version 
-                                'NCC Version' = ($NtnxCluster.ncc_version).TrimStart("ncc-") 
+                                'Version' = $NtnxCluster.version
+                                'NCC Version' = ($NtnxCluster.ncc_version).TrimStart("ncc-")
                                 'Timezone' = $NtnxCluster.timezone
                             }
                             if ($Healthcheck.Cluster.Timezone) {
@@ -151,14 +151,14 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         #region Network
                         Section -Style Heading3 'Network' {
                             $Networks = [PSCustomObject]@{
-                                'Virtual IP Address' = $NtnxCluster.cluster_external_ipaddress 
+                                'Virtual IP Address' = $NtnxCluster.cluster_external_ipaddress
                                 'iSCSI Data Services IP Address' = Switch ($NtnxCluster.cluster_external_data_services_ipaddress) {
                                     $null { '--' }
                                     default { $NtnxCluster.cluster_external_data_services_ipaddress }
                                 }
                                 'External Subnet' = $NtnxCluster.external_subnet
-                                'Internal Subnet' = $NtnxCluster.internal_subnet 
-                                'DNS Server(s)' = $NtnxCluster.name_servers -join ', ' 
+                                'Internal Subnet' = $NtnxCluster.internal_subnet
+                                'DNS Server(s)' = $NtnxCluster.name_servers -join ', '
                                 'NTP Server(s)' = ($NtnxCluster.ntp_servers | Sort-Object) -join ', '
                             }
                             $TableParams = @{
@@ -177,11 +177,11 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Controller VMs' {
                             $ControllerVMs = foreach ($NtnxCVM in $NtnxCVMs) {
                                 [PSCustomObject]@{
-                                    'Name' = $NtnxCVM.vmName 
+                                    'Name' = $NtnxCVM.vmName
                                     'Power State' = $TextInfo.ToTitleCase($NtnxCVM.powerState)
-                                    'Host' = $NtnxCVM.hostName 
-                                    'IP Address' = $NtnxCVM.ipAddresses[0] 
-                                    'Cores' = $NtnxCVM.numVCPUs 
+                                    'Host' = $NtnxCVM.hostName
+                                    'IP Address' = $NtnxCVM.ipAddresses[0]
+                                    'Cores' = $NtnxCVM.numVCPUs
                                     'Memory' = "$([math]::Round(($NtnxCVM.memoryCapacityinBytes) / 1073741824, 2)) GiB"
                                 }
                             }
@@ -315,7 +315,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
                             $Images | Table @TableParams
-                        } 
+                        }
                     }
                     #endregion Image Configuration
 
@@ -323,8 +323,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     if ($NtnxSmtpConfig.Address) {
                         Section -Style Heading3 'SMTP Server' {
                             $SmtpConfig = [PSCustomObject]@{
-                                'Address' = $NtnxSmtpConfig.address 
-                                'Port' = $NtnxSmtpConfig.port 
+                                'Address' = $NtnxSmtpConfig.address
+                                'Port' = $NtnxSmtpConfig.port
                                 'Username' = Switch ($NtnxSmtpConfig.username) {
                                     $null { "None" }
                                     default { $NtnxSmtpConfig.username }
@@ -356,13 +356,13 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Email Every Alert' = Switch ($NtnxAlertsConfig.enable) {
                                     $true { 'Yes' }
                                     $false { 'No' }
-                                } 
+                                }
                                 'Email Daily Alert' = Switch ($NtnxAlertsConfig.enable_email_digest) {
                                     $true { 'Yes' }
                                     $false { 'No' }
-                                } 
-                                'Nutanix Support Email' = $NtnxAlertsConfig.default_nutanix_email 
-                                'Additional Email Recipients' = $NtnxAlertsConfig.email_contact_list -join ', '                         
+                                }
+                                'Nutanix Support Email' = $NtnxAlertsConfig.default_nutanix_email
+                                'Additional Email Recipients' = $NtnxAlertsConfig.email_contact_list -join ', '
                             }
                             $TableParams = @{
                                 Name = "Alert Email Configuration - $($NtnxCluster.Name)"
@@ -384,7 +384,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Enabled' = Switch ($NtnxSnmpConfig.enabled) {
                                     $true { 'Yes' }
                                     $false { 'No' }
-                                }              
+                                }
                                 'Transports' = Switch ($NtnxSnmpConfig.snmp_transports) {
                                     $null { 'Not configured' }
                                     default { $NtnxSnmpConfig.snmp_transports -join ',' }
@@ -396,7 +396,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Traps' = Switch ($NtnxSnmpConfig.snmp_traps) {
                                     $null { 'Not configured' }
                                     default { $NtnxSnmpConfig.snmp_traps -join ',' }
-                                }    
+                                }
                             }
                             $TableParams = @{
                                 Name = "SNMP Configuration - $($NtnxCluster.Name)"
@@ -420,12 +420,12 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     }
                     #>
                     #endregion Syslog Configuration
-                    
+
                     #region Licensing
                     if ($NtnxLicense) {
                         Section -Style Heading3 'Licensing' {
                             $Licensing = [PSCustomObject]@{
-                                'Cluster' = $NtnxCluster.name 
+                                'Cluster' = $NtnxCluster.name
                                 'License' = ($NtnxLicense.category).Replace('_',' ')
                             }
                             if ($Healthcheck.System.Licensing) {
@@ -447,7 +447,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     foreach ($NtnxLicenseType in $NtnxLicenseAllowanceMap[0].PSObject.Properties) {
                                         Set-Variable -Name ('__{0}' -f $NtnxLicenseType.Name) -Value ($NtnxLicenseAllowanceMap | Select-Object -ExpandProperty $($NtnxLicenseType.Name))
                                     }
-                                    
+
                                     $NtnxLicenseValues = Get-Variable -Name '__*'
                                     $LicensingFeatures = foreach ($NtnxLicenseValue in $NtnxLicenseValues.value) {
                                         [PSCustomObject]@{
@@ -457,7 +457,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                     Switch ($NtnxLicenseValue.BoolValue.BoolValue) {
                                                         $true { 'Yes' }
                                                         $false { 'No' }
-                                                    } 
+                                                    }
                                                 }
                                                 'INTEGER_LIST' { ($NtnxLicenseValue.intValues).intValue }
                                             }
@@ -547,10 +547,10 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                 }
             }
             #endregion System Section
-            
+
             #region Hosts Section
             Write-PScriboMessage "Hosts InfoLevel set at $($InfoLevel.Hosts)."
-            if (($InfoLevel.Hosts -gt 0) -and ($NtnxHosts)) {             
+            if (($InfoLevel.Hosts -gt 0) -and ($NtnxHosts)) {
                 Section -Style Heading2 'Hosts' {
                     #region Host Hardware Summary
                     if ($InfoLevel.Hosts -eq 1) {
@@ -574,7 +574,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         }
                     }
                     #endregion Host Hardware Summary
-                    
+
                     #region Host Hardware Detailed
                     if ($InfoLevel.Hosts -ge 2) {
                         #region NtnxHost ForEach Loop
@@ -586,10 +586,10 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     $NtnxHostConfig = [PSCustomObject]@{
                                         'Host Name' = $NtnxHost.name
                                         'Host Type' = $TextInfo.ToTitleCase(($NtnxHost.host_type).ToLower()).Replace("_"," ")
-                                        'Node Serial' = $NtnxHost.serial 
-                                        'Block Serial' = $NtnxHost.block_serial 
-                                        'Block Model' = $NtnxHost.block_model_name 
-                                        #'BMC Version' = $NtnxHost.bmc_version 
+                                        'Node Serial' = $NtnxHost.serial
+                                        'Block Serial' = $NtnxHost.block_serial
+                                        'Block Model' = $NtnxHost.block_model_name
+                                        #'BMC Version' = $NtnxHost.bmc_version
                                         #'BIOS Version' = $NtnxHost.bios_version
                                         'Storage Capacity' = "$([math]::Round(($NtnxHost.usage_stats.'storage.capacity_bytes') / 1099511627776, 2)) TiB"
                                         'Memory' = "$([math]::Round(($NtnxHost.memory_capacity_in_bytes) / 1073741824, 2)) GiB"
@@ -602,9 +602,16 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         'Number of VMs' = $NtnxHost.num_vms
                                         'Oplog Disk %' = "$($NtnxHost.oplog_disk_pct) %"
                                         'Oplog Disk Size' = "$([math]::Round(($NtnxHost.oplog_disk_size) / 1073741824, 1)) GiB"
-                                        'Monitored' = $NtnxHost.monitored
+                                        'Monitored' = Switch ($NtnxHost.monitored) {
+                                            $True { 'Yes' }
+                                            $False { 'No' }
+                                        }
                                         'Hypervisor' = $NtnxHost.hypervisor_full_name
                                         #ToDo: 'Datastores'
+                                        'Secure Boot Enabled' = Switch ($NtnxHost.is_secure_booted) {
+                                            $True { 'Yes' }
+                                            $False { 'No' }
+                                        }
                                     }
                                     $TableParams = @{
                                         Name = "Host Hardware Specifications - $($NtnxCluster.Name)"
@@ -621,8 +628,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #region Host Network
                                 Section -Style Heading4 'Network' {
                                     $NtnxHostNetworks = [PSCustomObject]@{
-                                        'Hypervisor IP Address' = $NtnxHost.hypervisor_address 
-                                        'CVM IP Address' = $NtnxHost.service_vmexternal_ip 
+                                        'Hypervisor IP Address' = $NtnxHost.hypervisor_address
+                                        'CVM IP Address' = $NtnxHost.service_vmexternal_ip
                                         'IPMI IP Address' = Switch ($NtnxHost.ipmi_address) {
                                             $null { '--' }
                                             default { $NtnxHost.ipmi_address }
@@ -630,14 +637,14 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     }
                                     $TableParams = @{
                                         Name = "Host Network Specifications - $($NtnxCluster.Name)"
-                                        ColumnWidths = 34, 33, 33
+                                        ColumnWidths = 33, 34, 33
                                     }
                                     if ($Report.ShowTableCaptions) {
                                         $TableParams['Caption'] = "- $($TableParams.Name)"
                                     }
                                     $NtnxHostNetworks | Table @TableParams
                                 }
-                                #endregion Host Network 
+                                #endregion Host Network
 
                                 #region Host Disks
                                 $NtnxHostDisks = $NtnxDisks | Where-Object { $_.node_uuid -eq $NtnxHost.uuid } | Sort-Object 'Location'
@@ -659,12 +666,12 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                 'Storage Pool' = $NtnxStoragePoolLookup."$($NtnxHostDisk.disk_uuid)"
                                                 'Self Encryption Drive' = Switch ($NtnxHostDisk.self_encrypting_drive) {
                                                     $true { 'Present' }
-                                                    $false { 'Not Present' } 
+                                                    $false { 'Not Present' }
                                                 }
                                                 'Status' = $TextInfo.ToTitleCase(($NtnxHostDisk.disk_status).ToLower())
                                                 'Mode' = Switch ($NtnxHostDisk.online) {
                                                     $true { 'Online' }
-                                                    $false { 'Offline' }  
+                                                    $false { 'Offline' }
                                                 }
                                             }
                                         }
@@ -673,7 +680,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         if ($Healthcheck.Hardware.DiskMode) {
                                             $HostDisks | Where-Object { $_.'Mode' -ne 'Online' } | Set-Style -Style Critical -Property 'Mode'
-                                        }  
+                                        }
                                         if ($InfoLevel.Hosts -ge 3) {
                                             foreach ($NtnxHostDisk in $HostDisks) {
                                                 Section -Style Heading5 "Disk $($NtnxHostDisk.Location)" {
@@ -692,7 +699,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             $TableParams = @{
                                                 Name = "Host Disk Specifications - $($NtnxCluster.Name)"
                                                 Columns = 'Location', 'Disk ID', 'Serial Number', 'Firmware', 'Storage Tier', 'Capacity (Logical)', 'Status', 'Mode'
-                                                ColumnWidths = 10, 10, 27, 10, 10, 13, 10, 10
+                                                ColumnWidths = 10, 10, 25, 12, 10, 13, 10, 10
                                             }
                                             if ($Report.ShowTableCaptions) {
                                                 $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -704,10 +711,10 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #endregion Host Disks
 
                                 #region Host Datastores (VMware Hosts Only)
-                                if ($NtnxDatastores) {
+                                if (($NtnxDatastores) -and ($NtnxHost.hypervisor_type -eq 'kVMware')) {
                                     Section -Style Heading4 'Datastores' {
-                                        $NtnxDatastores = $NtnxDatastores | Where-Object { $_.host_uuid -eq $NtnxHost.uuid }
-                                        $NtnxHostDatastores = foreach ($NtnxHostDatastore in $NtnxDatastores) {
+                                        $NtnxHostDatastores = $NtnxDatastores | Where-Object { $_.host_uuid -eq $NtnxHost.uuid }
+                                        $NtnxHostDatastoreInfo = foreach ($NtnxHostDatastore in $NtnxHostDatastores) {
                                             [PSCustomObject]@{
                                                 'Datastore' = $NtnxHostDatastore.datastore_name
                                                 'Container' = $NtnxHostDatastore.storage_container_name
@@ -719,21 +726,22 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         $TableParams = @{
                                             Name = "Host Datastores - $($NtnxCluster.Name)"
+                                            ColumnWidths = 18, 18, 18, 18, 18, 10
                                         }
                                         if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
                                         }
-                                        $NtnxHostDatastores | Sort-Object 'Datastore' | Table @TableParams
+                                        $NtnxHostDatastoreInfo | Sort-Object 'Datastore' | Table @TableParams
                                     }
                                 }
                                 #endregion Host Datastores
                             }
                             #endregion Host Information
                         }
-                        #endregion NtnxHost ForEach Loop  
+                        #endregion NtnxHost ForEach Loop
                     }
                     #endregion Host Hardware Detailed
-                }               
+                }
             }
             #endregion Hosts Section
 
@@ -746,7 +754,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Containers' {
                             $Containers = foreach ($NtnxContainer in $NtnxContainers) {
                                 [PSCustomObject]@{
-                                    'Container' = $NtnxContainer.name 
+                                    'Container' = $NtnxContainer.name
                                     'Replication Factor' = "RF $($NtnxContainer.replication_factor)"
                                     #ToDo: 'Protection Domain'
                                     #ToDo: 'Datastore'
@@ -762,7 +770,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'Capacity Deduplication' = $TextInfo.ToTitleCase(($NtnxContainer.on_disk_dedup).ToLower())
                                     'Erasure Coding' = $TextInfo.ToTitleCase($NtnxContainer.erasure_code)
                                     'Free Capacity (Logical) TiB' = [math]::Round(($NtnxContainer.usage_stats.'storage.user_unreserved_free_bytes') / 1099511627776, 2)
-                                    'Used Capacity TiB' = [math]::Round(((($NtnxContainer.usage_stats.'storage.user_capacity_bytes') - ($NtnxContainer.usage_stats.'storage.reserved_capacity_bytes')) - ($NtnxContainer.usage_stats.'storage.user_unreserved_free_bytes')) / 1099511627776, 2)
+                                    'Used Capacity TiB' = [math]::Round((($NtnxContainer.usage_stats.'storage.user_capacity_bytes') - ($NtnxContainer.usage_stats.'storage.user_unreserved_free_bytes')) / 1099511627776, 2)
                                     'Maximum Capacity TiB' = [math]::Round((($NtnxContainer.usage_stats.'storage.user_capacity_bytes') - ($NtnxContainer.usage_stats.'storage.reserved_capacity_bytes')) / 1099511627776, 2)
                                     #ToDo: 'Reserved Capacity'
                                     'Advertised Capacity TiB' = [math]::Round(($NtnxContainer.advertised_capacity) / 1099511627776, 2)
@@ -803,7 +811,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             } else {
                                 $TableParams = @{
                                     Name = "Containers - $($NtnxCluster.Name)"
-                                    Columns = 'Container' , 'Replication Factor', 'Compression', 'Cache Deduplication', 'Capacity Deduplication', 'Erasure Coding', 'Free Capacity (Logical) TiB', 'Used Capacity TiB', 'Maximum Capacity TiB' 
+                                    Columns = 'Container' , 'Replication Factor', 'Compression', 'Cache Deduplication', 'Capacity Deduplication', 'Erasure Coding', 'Free Capacity (Logical) TiB', 'Used Capacity TiB', 'Maximum Capacity TiB'
                                 }
                                 if ($Report.ShowTableCaptions) {
                                     $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -869,7 +877,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                                         'Virtual Disk' = $VirtualGroupDisk.Index
                                                         'Total Capacity GiB' = [math]::Round(($VirtualGroupDisk.vmdisk_size_bytes) / 1073741824, 0)
                                                         'Container' = $NtnxContainerLookup."$($VirtualGroupDisk.storage_container_uuid)"
-                                                        'Disk Path' = $VirtualGroupDisk.vmdisk_path 
+                                                        'Disk Path' = $VirtualGroupDisk.vmdisk_path
                                                     }
                                                 }
                                                 $TableParams = @{
@@ -895,11 +903,11 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             $StoragePools = foreach ($NtnxStoragePool in $NtnxStoragePools) {
                                 [PSCustomObject]@{
                                     'Storage Pool' = $NtnxStoragePool.name
-                                    'Disks' = ($NtnxStoragePool.disks).count 
+                                    'Disks' = ($NtnxStoragePool.disks).count
                                     'Free Capacity TiB' = [math]::Round((($NtnxStoragePool.capacity) - ($NtnxStoragePool.usageStats.'storage.disk_physical_usage_bytes')) / 1099511627776, 2)
                                     'Used Capacity TiB' = [math]::Round(($NtnxStoragePool.usageStats.'storage.disk_physical_usage_bytes') / 1099511627776, 2)
                                     'Maximum Capacity TiB' = [math]::Round(($NtnxStoragePool.capacity) / 1099511627776, 2)
-                                } 
+                                }
                             }
                             $TableParams = @{
                                 Name = "Storage Pools - $($NtnxCluster.Name)"
@@ -913,7 +921,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     }
                     #endregion Storage Pools
 
-                    #region VMWare Datastores
+                    #region VMware Datastores
                     if ($NtnxDatastores) {
                         Section -Style Heading3 'VMware Datastores' {
                             $NfsDatastores = foreach ($NtnxDatastore in $NtnxDatastores) {
@@ -930,7 +938,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         $false { '--' }
 
                                     }
-                                } 
+                                }
                             }
                             if ($InfoLevel.Storage -eq 1) {
                                 $TableParams = @{
@@ -977,7 +985,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 'Cores' = $NtnxVM.numVCpus
                                 'Memory' = "$([math]::Round(($NtnxVM.memoryCapacityInBytes) / 1073741824, 0)) GiB"
                                 'IP Addresses' = $NtnxVM.ipAddresses -join ', '
-                                'Disk Capacity' = "$([math]::Round(($NtnxVM.diskCapacityinBytes) / 1073741824, 2)) GiB"                                
+                                'Disk Capacity' = "$([math]::Round(($NtnxVM.diskCapacityinBytes) / 1073741824, 2)) GiB"
                             }
                         }
                         if ($Healthcheck.VM.PowerState) {
@@ -1019,7 +1027,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'Operating System' = Switch ($NtnxVM.guestOperatingSystem) {
                                         $null { '--' }
                                         default { $NtnxVM.guestOperatingSystem }
-                                    } 
+                                    }
                                     'IP Addresses' = $NtnxVM.ipAddresses -join ', '
                                     'Storage Container' = $NtnxContainerLookup."$($NtnxVM.containerUuids)"
                                     'Virtual Disks' = ($NtnxVM.nutanixVirtualDisks).Count
@@ -1058,8 +1066,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         $VMVirtualDisks = foreach ($NtnxVMVirtualDisk in $NtnxVMVirtualDisks) {
                                             [PSCustomObject]@{
                                                 'Virtual Disk' = $NtnxVMVirtualDisk.diskAddress
-                                                'Total Capacity' = "$([math]::Round(($NtnxVMVirtualDisk.diskCapacityInBytes) / 1073741824, 0)) GiB" 
-                                                #ToDo: Total Logical Capacity 
+                                                'Total Capacity' = "$([math]::Round(($NtnxVMVirtualDisk.diskCapacityInBytes) / 1073741824, 0)) GiB"
+                                                #ToDo: Total Logical Capacity
                                                 #ToDo: Add Container results for Hyper-V
                                                 'Container' = Switch ( $NtnxVM.hypervisorType ) {
                                                     'kKVM' { $NtnxContainerLookup."$($NtnxVMVirtualDisk.containerUuid)" }
@@ -1070,7 +1078,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         $TableParams = @{
                                             Name = "Virtual Disks - $($NtnxVM.vmName)"
-                                            ColumnWidths = 33, 33, 34
+                                            ColumnWidths = 33, 34, 33
                                         }
                                         if ($Report.ShowTableCaptions) {
                                             $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -1088,7 +1096,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                             [PSCustomObject]@{
                                                 #ToDo: Find a way to get the 'Port Name' for VMware
                                                 'Network Name' = $NtnxNetworkLookup."$($NtnxVMNic.network_uuid)"
-                                                'Adapter Type' = $NtnxVMNic.adapter_type 
+                                                'Adapter Type' = $NtnxVMNic.adapter_type
                                                 'VLAN ID' = $NtnxNetworkVlanLookup."$($NtnxVMNic.network_uuid)"
                                                 'MAC Address' = $NtnxVMNic.mac_address
                                                 'IP Address' = ($NtnxVMNic.ip_address | Sort-Object) -join ', '
@@ -1104,7 +1112,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         $TableParams = @{
                                             Name = "VM NICs - $($NtnxVM.vmName)"
-                                            
+
                                         }
                                         # Build different table format based on hypervisor type
                                         Switch ( $NtnxVM.hypervisorType ) {
@@ -1166,15 +1174,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Protection Domains' {
                             $ProtectionDomains = foreach ($NtnxProtectionDomain in $NtnxProtectionDomains) {
                                 [PSCustomObject]@{
-                                    'Name' = $NtnxProtectionDomain.name 
+                                    'Name' = $NtnxProtectionDomain.name
                                     'Active' = Switch ($NtnxProtectionDomain.active) {
                                         $true { 'Yes' }
                                         $false { 'No' }
                                     }
-                                    'Remote Site(s)' = $NtnxProtectionDomain.replication_links.remote_site_name 
-                                    'Pending Replications' = $NtnxProtectionDomain.pending_replication_count 
-                                    'Ongoing Replications' = $NtnxProtectionDomain.ongoing_replication_count 
-                                    'Written Bytes' = $NtnxProtectionDomain.total_user_written_bytes     
+                                    'Remote Site(s)' = $NtnxProtectionDomain.replication_links.remote_site_name
+                                    'Pending Replications' = $NtnxProtectionDomain.pending_replication_count
+                                    'Ongoing Replications' = $NtnxProtectionDomain.ongoing_replication_count
+                                    'Written Bytes' = $NtnxProtectionDomain.total_user_written_bytes
                                 }
                             }
                             $TableParams = @{
@@ -1184,20 +1192,20 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
-                            $ProtectionDomains | Sort-Object 'Name' | Table @TableParams 
+                            $ProtectionDomains | Sort-Object 'Name' | Table @TableParams
                         }
                     }
                     #endregion Protection Domains
-                    
+
                     #region Protection Domain Replication
                     if (($InfoLevel.DataProtection -eq 3) -and ($NtnxPDReplications)) {
                         Section -Style Heading3 'Protection Domain Replication' {
                             $ProtectionDomainReplications = foreach ($NtnxPDReplication in $NtnxPDReplications) {
                                 [PSCustomObject]@{
-                                    'Name' = $NtnxPDReplication.protection_domain_name 
+                                    'Name' = $NtnxPDReplication.protection_domain_name
                                     'Remote Sites' = $NtnxPDReplication.remote_site_name -join ', '
-                                    'Snapshot ID' = $NtnxPDReplication.snapshot_id 
-                                    'Data Completed' = "$([math]::Round(($NtnxPDReplication.completed_bytes) / 1099511627776, 2)) TiB" 
+                                    'Snapshot ID' = $NtnxPDReplication.snapshot_id
+                                    'Data Completed' = "$([math]::Round(($NtnxPDReplication.completed_bytes) / 1099511627776, 2)) TiB"
                                     '% Complete' = $NtnxPDReplication.completed_percentage
                                     'Minutes to Complete' = [math]::Round(($NtnxPDReplication.replication_time_to_complete_secs) / 60, 2)
                                 }
@@ -1208,19 +1216,19 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
-                            $ProtectionDomainReplications | Sort-Object 'Name' | Table @TableParams 
+                            $ProtectionDomainReplications | Sort-Object 'Name' | Table @TableParams
                         }
                     }
-                    #endregion Protection Domain Replication                   
-                    
+                    #endregion Protection Domain Replication
+
                     #region Protection Domain Snapshots
                     if (($InfoLevel.DataProtection -eq 3) -and ($NtnxDrSnapshots)) {
                         Section -Style Heading3 'Protection Domain Snapshots' {
                             $ProtectionDomainSnapshots = foreach ($NtnxDrSnapshot in $NtnxDrSnapshots) {
                                 [PSCustomObject]@{
-                                    'Protection Domain' = $NtnxDrSnapshot.protection_domain_name 
-                                    'State' = ($NtnxDrSnapshot.state).ToLower() 
-                                    'Snapshot ID' = $NtnxDrSnapshot.snapshot_id 
+                                    'Protection Domain' = $NtnxDrSnapshot.protection_domain_name
+                                    'State' = ($NtnxDrSnapshot.state).ToLower()
+                                    'Snapshot ID' = $NtnxDrSnapshot.snapshot_id
                                     'Consistency Groups' = $NtnxDrSnapshot.consistency_groups -join ', '
                                     'Remote Site(s)' = $NtnxDrSnapshot.remote_site_names -join ', '
                                     'Size in Bytes' = $NtnxDrSnapshot.size_in_bytes
@@ -1242,15 +1250,15 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Unprotected VMs' {
                             $UnprotectedVMs = foreach ($NtnxUnprotectedVM in $NtnxUnprotectedVMs) {
                                 [PSCustomObject]@{
-                                    'VM Name' = $NtnxUnprotectedVM.vm_name 
+                                    'VM Name' = $NtnxUnprotectedVM.vm_name
                                     'Power State' = $TextInfo.ToTitleCase($NtnxUnprotectedVM.power_state)
                                     'Operating System' = Switch ($NtnxUnprotectedVM.guest_operating_system) {
                                         $null { '--' }
                                         default { $NtnxUnprotectedVM.guest_operating_system }
                                     }
                                     'Cores' = $NtnxUnprotectedVM.num_vcpus
-                                    'Network Adapters' = $NtnxUnprotectedVM.num_network_adapters 
-                                    'Disk Capacity' = "$([math]::Round(($NtnxUnprotectedVM.disk_capacity_in_bytes) / 1073741824, 2)) GiB" 
+                                    'Network Adapters' = $NtnxUnprotectedVM.num_network_adapters
+                                    'Disk Capacity' = "$([math]::Round(($NtnxUnprotectedVM.disk_capacity_in_bytes) / 1073741824, 2)) GiB"
                                     'Host' = $NtnxUnprotectedVM.host_name
                                 }
                             }
@@ -1261,7 +1269,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
                             }
-                            $UnprotectedVMs | Sort-Object 'VM Name' | Table @TableParams 
+                            $UnprotectedVMs | Sort-Object 'VM Name' | Table @TableParams
                         }
                     }
                     #endregion Unprotected VMs
@@ -1271,8 +1279,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Remote Sites' {
                             $RemoteSites = foreach ($NtnxRemoteSite in $NtnxRemoteSites) {
                                 [PSCustomObject]@{
-                                    'Name' = $NtnxRemoteSite.name 
-                                    'Capabilities' = ($TextInfo.ToTitleCase(($NtnxRemoteSite.capabilities).ToLower()) | Sort-Object) -join ', ' 
+                                    'Name' = $NtnxRemoteSite.name
+                                    'Capabilities' = ($TextInfo.ToTitleCase(($NtnxRemoteSite.capabilities).ToLower()) | Sort-Object) -join ', '
                                     'Remote Addresses' = "$(($NtnxRemoteSite.remoteIpPorts | Get-Member -MemberType NoteProperty).Name):2020"
                                     'Metro Ready' = Switch ($NtnxRemoteSite.metroReady) {
                                         $true { 'Yes' }
@@ -1293,7 +1301,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     'Bandwidth Throttling' = Switch ($NtnxRemoteSite.bandwidthPolicyEnabled) {
                                         $true { 'On' }
                                         $false { 'Off' }
-                                    }                    
+                                    }
                                 }
                             }
                             if ($Healthcheck.DataProtection.CompressOnWire) {

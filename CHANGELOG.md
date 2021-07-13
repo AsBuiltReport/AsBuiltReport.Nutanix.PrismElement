@@ -1,5 +1,14 @@
 # :arrows_counterclockwise: Nutanix Prism Element As Built Report Changelog
 
+## [1.2.0] 2021-07-13
+
+### Added
+- Added PowerShell 7 compatibility
+- Added reporting of Secure Boot for host hardware
+### Fixed
+- Fixed reporting of clusters with AHV Storage Only nodes (Fixes #10)
+- Fixed reporting of containers used capacity
+
 ## [1.1.2] 2020-09-24
 ### Added
 - Added system licensing health check

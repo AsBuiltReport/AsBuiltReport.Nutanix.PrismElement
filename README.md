@@ -153,58 +153,58 @@ The **Cluster** schema is used to configure health checks for the Nutanix cluste
 | Sub-Schema      | Setting      | Default | Description                                              | Highlight                                                                                                                                                                                 |
 |-----------------|--------------|---------|----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Timezone        | true/false   | false   | Enables/Disables the timezone setting health check       |                                                                                                                                                                                           |
-| TimezoneSetting | User Defined | UTC     | Checks the configured timezone for the Nutanix cluster   | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Not compliant with user defined setting                                                                                          |
-| DataResiliency  | true/false   | true    | Checks the data resiliency status of the Nutanix cluster | ![OK](https://via.placeholder.com/15/36D068/000000?text=+) Data relisency status is possible <br>![Critical](https://via.placeholder.com/15/F55656/000000?text=+) Data relisency status is not possible |
+| TimezoneSetting | User Defined | UTC     | Checks the configured timezone for the Nutanix cluster   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Not compliant with user defined setting                                                                                          |
+| DataResiliency  | true/false   | true    | Checks the data resiliency status of the Nutanix cluster | ![OK](https://via.placeholder.com/15/36D068/36D068.png) Data relisency status is possible <br>![Critical](https://via.placeholder.com/15/F55656/F55656.png) Data relisency status is not possible |
 
 #### CVM
 The **CVM** schema is used to configure health checks for the Nutanix Controller Virtual Machine (CVM).
 
 | Sub-Schema | Setting    | Default | Description                          | Highlight                                                                   |
 |------------|------------|---------|--------------------------------------|-----------------------------------------------------------------------------|
-| PowerState | true/false | true    | Highlights if the CVM is powered off | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) CVM is powered off |
+| PowerState | true/false | true    | Highlights if the CVM is powered off | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) CVM is powered off |
 
 #### System
 The **System** schema is used to configure health checks for the entire system.
 
 | Sub-Schema | Setting    | Default | Description                                        | Highlight                                                                                     |
 |------------|------------|---------|----------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| ImageState | true/false | false   | Highlights images which are in an inactive state   | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Image is in an inactive state        |
-| Licensing  | true/false | true    | Highlights if no license is applied to the cluster | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) No license is applied to the cluster |
+| ImageState | true/false | false   | Highlights images which are in an inactive state   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Image is in an inactive state        |
+| Licensing  | true/false | true    | Highlights if no license is applied to the cluster | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) No license is applied to the cluster |
 
 #### Hardware
 The **Hardware** schema is used to configure health checks for Nutanix hardware.
 
 | Sub-Schema | Setting    | Default | Description                                       | Highlight                                                                           |
 |------------|------------|---------|---------------------------------------------------|-------------------------------------------------------------------------------------|
-| DiskStatus | true/false | true    | Highlights disks where their status is not normal | ![Critical](https://via.placeholder.com/15/F55656/000000?text=+) Disk status is not normal |
-| DiskMode   | true/false | true    | Highlights disks which are offline                | ![Critical](https://via.placeholder.com/15/F55656/000000?text=+) Disk mode is offline      |
+| DiskStatus | true/false | true    | Highlights disks where their status is not normal | ![Critical](https://via.placeholder.com/15/F55656/F55656.png) Disk status is not normal |
+| DiskMode   | true/false | true    | Highlights disks which are offline                | ![Critical](https://via.placeholder.com/15/F55656/F55656.png) Disk mode is offline      |
 
 #### Storage
 The **Storage** schema is used to configure health checks for Nutanix storage containers.
 
 | Sub-Schema     | Setting    | Default | Description                                                                    | Highlight                                                                                   |
 |----------------|------------|---------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| Compression    | true/false | false   | Highlights storage containers which do not have compression enabled            | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Compression is disabled            |
-| CacheDedupe    | true/false | false   | Highlights storage containers which do not have cache deduplication enabled    | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Cache deduplication is disabled    |
-| CapacityDedupe | true/false | false   | Highlights storage containers which do not have capacity deduplication enabled | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Capacity deduplication is disabled |
-| ErasureCoding  | true/false | false   | Highlights storage containers which do not have erasure coding enabled         | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Erasure coding is disabled         |
+| Compression    | true/false | false   | Highlights storage containers which do not have compression enabled            | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Compression is disabled            |
+| CacheDedupe    | true/false | false   | Highlights storage containers which do not have cache deduplication enabled    | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Cache deduplication is disabled    |
+| CapacityDedupe | true/false | false   | Highlights storage containers which do not have capacity deduplication enabled | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Capacity deduplication is disabled |
+| ErasureCoding  | true/false | false   | Highlights storage containers which do not have erasure coding enabled         | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Erasure coding is disabled         |
 
 #### VM
 The **VM** schema is used to configure health checks for virtual machines.
 
 | Sub-Schema         | Setting    | Default | Description                               | Highlight                                                                       |
 |--------------------|------------|---------|-------------------------------------------|---------------------------------------------------------------------------------|
-| PowerState         | true/false | true    | Highlights VMs which are powered off      | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) VM is powered off      |
-| NicConnectionState | true/false | true    | Highlights VM NICs which are disconnected | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) VM NIC is disconnected |
+| PowerState         | true/false | true    | Highlights VMs which are powered off      | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) VM is powered off      |
+| NicConnectionState | true/false | true    | Highlights VM NICs which are disconnected | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) VM NIC is disconnected |
 
 #### DataProtection
 The **DataProtection** schema is used to configure health checks for Nutanix data protection.
 
 | Sub-Schema          | Setting    | Default | Description                                    | Highlight                                                                                 |
 |---------------------|------------|---------|------------------------------------------------|-------------------------------------------------------------------------------------------|
-| CompressOnWire      | true/false | false   | Highlights if line compression is disabled     | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Line compression is disabled     |
-| BandwidthThrottling | true/false | false   | Highlights if bandwidth throttling is disabled | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Bandwidth throttling is disabled |
-| Proxy               | true/false | false   | Highlights if proxy setting is disabled        | ![Warning](https://via.placeholder.com/15/FFBC0B/000000?text=+) Proxy setting is disabled        |
+| CompressOnWire      | true/false | false   | Highlights if line compression is disabled     | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Line compression is disabled     |
+| BandwidthThrottling | true/false | false   | Highlights if bandwidth throttling is disabled | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Bandwidth throttling is disabled |
+| Proxy               | true/false | false   | Highlights if proxy setting is disabled        | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Proxy setting is disabled        |
 
 ## :computer: Examples
 

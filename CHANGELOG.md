@@ -1,4 +1,12 @@
-# :arrows_counterclockwise: Nutanix Prism Element As Built Report Changelog
+# :arrows_clockwise: Nutanix Prism Element As Built Report Changelog
+
+## [1.2.1] 2022-07-07
+### Fixed
+- Fixed license reporting in AOS 6.x
+- Display issues with highlights in `README.md`
+### Changed
+- Updated sample reports
+- Excluded some section headings from TOC to improve formatting
 
 ## [1.2.0] 2021-07-13
 

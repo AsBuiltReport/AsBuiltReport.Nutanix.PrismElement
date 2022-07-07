@@ -12,13 +12,7 @@ function Get-NtnxApi {
             Mandatory = $true
         )]
         [ValidateNotNullOrEmpty()]
-        [String] $Uri,
-
-        [Parameter(
-            Mandatory = $false
-        )]
-        [ValidateNotNullOrEmpty()]
-        [Switch] $SkipCertificateCheck
+        [String] $Uri
     )
 
     Begin {
@@ -71,16 +65,18 @@ function Get-NtnxApi {
     Process {
         Try {
             # Check PowerShell version
-            if ($PSVersionTable.PSVersion.Major -ge "7") {
+            if ($PSVersionTable.PSVersion.Major -eq "7") {
                 Switch ($Version) {
                     '1' { Invoke-RestMethod -Method Get -Uri ($api_v1 + $uri) -Headers $headers -SkipCertificateCheck }
                     '2' { Invoke-RestMethod -Method Get -Uri ($api_v2 + $uri) -Headers $headers -SkipCertificateCheck }
                 }
-            } else {
+            } elseif ($PSVersionTable.PSVersion.Major -eq "5") {
                 Switch ($Version) {
                     '1' { Invoke-RestMethod -Method Get -Uri ($api_v1 + $uri) -Headers $headers }
                     '2' { Invoke-RestMethod -Method Get -Uri ($api_v2 + $uri) -Headers $headers }
                 }
+            } else {
+                Throw
             }
         } Catch {
             Write-Verbose -Message "Error with API reference call to $(($URI).TrimStart('/'))"

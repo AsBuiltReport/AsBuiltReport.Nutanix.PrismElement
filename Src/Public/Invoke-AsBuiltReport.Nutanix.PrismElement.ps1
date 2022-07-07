@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats using PScribo.
     .NOTES
-        Version:        1.2.0
+        Version:        1.2.1
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -248,7 +248,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     #region Authentication
                     if ($NtnxAuthConfig) {
                         Section -Style Heading3 'Authentication' {
-                            Section -Style Heading4 'Authentication Types' {
+                            Section -Style Heading4 -ExcludeFromTOC 'Authentication Types' {
                                 $AuthenticationTypes = [PSCustomObject]@{
                                     'Authentication Types' = $TextInfo.ToTitleCase(($NtnxAuthConfig.auth_type_list.Replace('_', ' ') -join ', ').ToLower())
                                 }
@@ -263,7 +263,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $AuthenticationTypes | Table @TableParams
                             }
                             if ($NtnxAuthConfig.directory_list) {
-                                Section -Style Heading4 'Directory List' {
+                                Section -Style Heading4 -ExcludeFromTOC 'Directory List' {
                                     $DirectoryList = [PSCustomObject]@{
                                         'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower()).Replace("_"," ")
                                         'Directory Name' = $NtnxAuthConfig.directory_list.name
@@ -310,6 +310,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Image Configuration - $($NtnxCluster.Name)"
+                                ColumnWidths = 20, 20, 20, 20, 20
                             }
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -422,6 +423,9 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     #endregion Syslog Configuration
 
                     #region Licensing
+                    if ($NtnxLicense.LicenseDTO) {
+                        $NtnxLicense = $NtnxLicense.LicenseDTO
+                    }
                     if ($NtnxLicense) {
                         Section -Style Heading3 'Licensing' {
                             $Licensing = [PSCustomObject]@{
@@ -442,7 +446,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
 
                             if ($InfoLevel.System -gt 2) {
                                 #region Licensing Features
-                                Section -Style Heading4 'Features' {
+                                Section -Style Heading4 -ExcludeFromTOC 'Features' {
                                     $NtnxLicenseAllowanceMap = $NtnxLicense.allowanceMap
                                     foreach ($NtnxLicenseType in $NtnxLicenseAllowanceMap[0].PSObject.Properties) {
                                         Set-Variable -Name ('__{0}' -f $NtnxLicenseType.Name) -Value ($NtnxLicenseAllowanceMap | Select-Object -ExpandProperty $($NtnxLicenseType.Name))
@@ -508,7 +512,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             #region Health Checks Comprehensive Information
                             if ($InfoLevel.System -eq 4) {
                                 foreach ($NtnxHealthCheck in $NtnxHealthChecks) {
-                                    Section -Style Heading4 "$($NtnxHealthCheck.name)" {
+                                    Section -Style Heading4 -ExcludeFromTOC "$($NtnxHealthCheck.name)" {
                                         $HealthChecksFull = [PSCustomObject]@{
                                             'Health Check' = $NtnxHealthCheck.name
                                             'Description' = $NtnxHealthCheck.description
@@ -683,7 +687,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         }
                                         if ($InfoLevel.Hosts -ge 3) {
                                             foreach ($NtnxHostDisk in $HostDisks) {
-                                                Section -Style Heading5 "Disk $($NtnxHostDisk.Location)" {
+                                                Section -Style Heading5 -ExcludeFromTOC "Disk $($NtnxHostDisk.Location)" {
                                                     $TableParams = @{
                                                         Name = "Host Disk $($NtnxHostDisk.Location) Specifications - $($NtnxCluster.Name)"
                                                         List = $true
@@ -796,7 +800,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             if ($InfoLevel.Storage -gt 2) {
                                 foreach ($Container in $Containers) {
-                                    Section -Style Heading4 "$($Container.Container)" {
+                                    Section -Style Heading4 -ExcludeFromTOC "$($Container.Container)" {
                                         $TableParams = @{
                                             Name = "Containers - $($NtnxCluster.Name)"
                                             List = $true
@@ -848,7 +852,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $VolumeGroups | Table @TableParams
                             } else {
                                 foreach ($NtnxVolumeGroup in $NtnxVolumeGroups) {
-                                    Section -Style Heading4 $($NtnxVolumeGroup.Name) {
+                                    Section -Style Heading4 -ExcludeFromTOC $($NtnxVolumeGroup.Name) {
                                         $VolumeGroup = [PSCustomObject]@{
                                             'Volume Group' = $NtnxVolumeGroup.Name
                                             'Number of Virtual Disks' = ($NtnxVolumeGroup.disk_list).Count
@@ -870,7 +874,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                         $VolumeGroup | Table @TableParams
 
                                         if ($InfoLevel.Storage -ge 3) {
-                                            Section -Style Heading4 'Virtual Disks' {
+                                            Section -Style Heading4 -ExcludeFromTOC 'Virtual Disks' {
                                                 $VirtualGroupDisks = $NtnxVolumeGroup.disk_list | Sort-Object Index
                                                 $NtnxVirtualGroupDisks = foreach ($VirtualGroupDisk in $VirtualGroupDisks) {
                                                     [PSCustomObject]@{
@@ -951,8 +955,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 }
                                 $NfsDatastores | Sort-Object Datastore, Host | Table @TableParams
                             } else {
-                                foreach ($NfsDatastore in $NfsDatastores) {
-                                    Section -Style Heading4 $($NfsDatastore.Datastore) {
+                                foreach ($NfsDatastore in ($NfsDatastores | Sort-Object Datastore | Sort-Object Host)) {
+                                    Section -Style Heading4 -ExcludeFromTOC $($NfsDatastore.Datastore) {
                                         $TableParams = @{
                                             Name = "Datastore $($NfsDatastore.Datastore) - $($NfsDatastore.Host)"
                                             List = $true
@@ -1062,7 +1066,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #region VM Virtual Disks
                                 $NtnxVMVirtualDisks = $NtnxVirtualDisks | Where-Object {$_.attachedVMName -eq $($NtnxVM.vmName)} | Sort-Object diskAddress
                                 if ($NtnxVMVirtualDisks) {
-                                    Section -Style Heading4 'Virtual Disks' {
+                                    Section -Style Heading4 -ExcludeFromTOC 'Virtual Disks' {
                                         $VMVirtualDisks = foreach ($NtnxVMVirtualDisk in $NtnxVMVirtualDisks) {
                                             [PSCustomObject]@{
                                                 'Virtual Disk' = $NtnxVMVirtualDisk.diskAddress
@@ -1091,7 +1095,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #region VM NICs
                                 $NtnxVMNics = (Get-NtnxApi -Version 2 -Uri $('/vms/' + $($NtnxVM.uuid) + '/nics')).entities | Sort-Object network_uuid
                                 if ($NtnxVMNics) {
-                                    Section -Style Heading4 'VM NICs' {
+                                    Section -Style Heading4 -ExcludeFromTOC 'VM NICs' {
                                         $VMNics = foreach ($NtnxVMNic in $NtnxVMNics) {
                                             [PSCustomObject]@{
                                                 #ToDo: Find a way to get the 'Port Name' for VMware
@@ -1212,6 +1216,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Protection Domain Replication - $($NtnxCluster.Name)"
+                                ColumnWidths = 25, 15, 15, 15, 15, 15
                             }
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -1236,6 +1241,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             }
                             $TableParams = @{
                                 Name = "Protection Domain Snapshots - $($NtnxCluster.Name)"
+                                ColumnWidths = 15, 15, 15, 25, 15, 15
                             }
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"

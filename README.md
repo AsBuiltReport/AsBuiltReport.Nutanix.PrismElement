@@ -35,7 +35,7 @@ Sample Nutanix Prism Element As Built Report with health checks, using default r
 
 ![Sample Nutanix Prism Element As Built Report](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample%20Nutanix%20Prism%20Element%20As%20Built%20Report.jpg "Sample Nutanix Prism Element As Built Report")
 
-Sample Nutanix Prism Element As Built Report HTML file: [Sample Nutanix Prism Element As Built Report.html](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample%20Nutanix%20Prism%20Element%20As%20Built%20Report.html "Sample Nutanix Prism Element As Built Report")
+Sample Nutanix Prism Element As Built Report HTML file: [Sample Nutanix Prism Element As Built Report.html](https://htmlpreview.github.io/?https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample%20Nutanix%20Prism%20Element%20As%20Built%20Report.html "Sample Nutanix Prism Element As Built Report")
 # :beginner: Getting Started
 Below are the instructions on how to install, configure and generate a Nutanix Prism As Built report.
 

@@ -16,39 +16,29 @@ function Get-NtnxApi {
     )
 
     Begin {
-    #region Workaround for SelfSigned Cert an force TLS 1.2
-    if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
-        $certCallback = @"
-        using System;
-        using System.Net;
-        using System.Net.Security;
-        using System.Security.Cryptography.X509Certificates;
-        public class ServerCertificateValidationCallback
-        {
-            public static void Ignore()
-            {
-                if(ServicePointManager.ServerCertificateValidationCallback ==null)
-                {
-                    ServicePointManager.ServerCertificateValidationCallback +=
-                        delegate
-                        (
-                            Object obj,
-                            X509Certificate certificate,
-                            X509Chain chain,
-                            SslPolicyErrors errors
-                        )
-                        {
-                            return true;
-                        };
-                }
-            }
+        #region Workaround for SelfSigned Cert an force TLS 1.2
+
+        if ($PSVersionTable.PSEdition -ne 'Core') {
+
+            Add-Type @"
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    public class TrustAllCertsPolicy : ICertificatePolicy {
+        public bool CheckValidationResult(
+            ServicePoint srvPoint, X509Certificate certificate,
+            WebRequest request, int certificateProblem) {
+            return true;
         }
-"@
-        Add-Type $certCallback
     }
-    [ServerCertificateValidationCallback]::Ignore()
-    [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-    #endregion Workaround for SelfSigned Cert an force TLS 1.2
+"@
+            [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+        }
+
+
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+        [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+        #endregion Workaround for SelfSigned Cert an force TLS 1.2
 
         $username = $Credential.UserName
         $password = $Credential.GetNetworkCredential().Password
@@ -56,9 +46,9 @@ function Get-NtnxApi {
         $api_v1 = "https://" + $NtnxPE + ":9440/PrismGateway/services/rest/v1"
         $api_v2 = "https://" + $NtnxPE + ":9440/PrismGateway/services/rest/v2.0"
         $headers = @{
-            'Accept'        = 'application/json'
+            'Accept' = 'application/json'
             'Authorization' = "Basic $auth"
-            'Content-Type'  = 'application/json'
+            'Content-Type' = 'application/json'
         }
     }
 

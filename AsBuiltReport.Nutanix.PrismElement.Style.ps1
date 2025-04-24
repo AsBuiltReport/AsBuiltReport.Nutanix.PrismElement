@@ -7,10 +7,10 @@ DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -Margin
 Style -Name 'Title' -Size 24 -Color '024DA1' -Align Center
 Style -Name 'Title 2' -Size 18 -Color 'AFD135' -Align Center
 Style -Name 'Title 3' -Size 12 -Color 'AFD135' -Align Left
-Style -Name 'Heading 1' -Size 16 -Color '024DA1' 
-Style -Name 'Heading 2' -Size 14 -Color '024DA1' 
-Style -Name 'Heading 3' -Size 12 -Color '024DA1' 
-Style -Name 'Heading 4' -Size 11 -Color '024DA1' 
+Style -Name 'Heading 1' -Size 16 -Color '024DA1'
+Style -Name 'Heading 2' -Size 14 -Color '024DA1'
+Style -Name 'Heading 3' -Size 12 -Color '024DA1'
+Style -Name 'Heading 4' -Size 11 -Color '024DA1'
 Style -Name 'Heading 5' -Size 10 -Color '024DA1'
 Style -Name 'Normal' -Size 10 -Color '565656' -Default
 Style -Name 'Caption' -Size 10 -Color '565656' -Italic -Align Center

@@ -5,7 +5,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
     .DESCRIPTION
         Documents the configuration of Nutanix Prism infrastucture in Word/HTML/Text formats using PScribo.
     .NOTES
-        Version:        1.2.1
+        Version:        1.2.2
         Author:         Tim Carman
         Twitter:        @tpcarman
         Github:         tpcarman
@@ -265,12 +265,12 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             if ($NtnxAuthConfig.directory_list) {
                                 Section -Style Heading4 -ExcludeFromTOC 'Directory List' {
                                     $DirectoryList = [PSCustomObject]@{
-                                        'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower()).Replace("_"," ")
+                                        'Directory Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.directory_type).ToLower()).Replace("_", " ")
                                         'Directory Name' = $NtnxAuthConfig.directory_list.name
                                         'Domain' = $NtnxAuthConfig.directory_list.domain
                                         'URL' = $NtnxAuthConfig.directory_list.directory_url
                                         'Connection Type' = $NtnxAuthConfig.directory_list.connection_type
-                                        'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower()).Replace("_"," ")
+                                        'Group Search Type' = $TextInfo.ToTitleCase(($NtnxAuthConfig.directory_list.group_search_type).ToLower()).Replace("_", " ")
                                     }
                                     $TableParams = @{
                                         Name = "Directory List - $($NtnxCluster.Name)"
@@ -386,23 +386,26 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                     $true { 'Yes' }
                                     $false { 'No' }
                                 }
-                                'Transports' = Switch ($NtnxSnmpConfig.snmp_transports) {
-                                    $null { 'Not configured' }
-                                    default { $NtnxSnmpConfig.snmp_transports -join ',' }
+                                'Transports' = Switch ([string]::IsNullOrEmpty($NtnxSnmpConfig.snmp_transports)) {
+                                    $true { 'Not configured' }
+                                    $false { $NtnxSnmpConfig.snmp_transports | ForEach-Object {"$($_.transport_protocol)\$($_.port)"} }
+                                    default { '--' }
                                 }
-                                'Users' = Switch ($NtnxSnmpConfig.snmp_users) {
-                                    $null { 'Not configured' }
-                                    default { $NtnxSnmpConfig.snmp_users -join ',' }
+                                'Users' = Switch ([string]::IsNullOrEmpty($NtnxSnmpConfig.snmp_users)) {
+                                    $true { 'Not configured' }
+                                    $false { $NtnxSnmpConfig.snmp_users | ForEach-Object {"Username:$($_.username) Auth_type:$($_.auth_type) Priv_type:$($_.priv_type)"} }
+                                    default { '--' }
                                 }
-                                'Traps' = Switch ($NtnxSnmpConfig.snmp_traps) {
-                                    $null { 'Not configured' }
-                                    default { $NtnxSnmpConfig.snmp_traps -join ',' }
+                                'Traps' = Switch ([string]::IsNullOrEmpty($NtnxSnmpConfig.snmp_traps)) {
+                                    $true { 'Not configured' }
+                                    $false { $NtnxSnmpConfig.snmp_traps | ForEach-Object {"Address:$($_.trap_address) Port:$($_.port) Protocol:$($_.transport_protocol)"} }
+                                    default { '--' }
                                 }
                             }
                             $TableParams = @{
                                 Name = "SNMP Configuration - $($NtnxCluster.Name)"
                                 List = $true
-                                ColumnWidths = 50, 50
+                                ColumnWidths = 40, 60
                             }
                             if ($Report.ShowTableCaptions) {
                                 $TableParams['Caption'] = "- $($TableParams.Name)"
@@ -430,7 +433,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                         Section -Style Heading3 'Licensing' {
                             $Licensing = [PSCustomObject]@{
                                 'Cluster' = $NtnxCluster.name
-                                'License' = ($NtnxLicense.category).Replace('_',' ')
+                                'License' = ($NtnxLicense.category).Replace('_', ' ')
                             }
                             if ($Healthcheck.System.Licensing) {
                                 $Licensing | Where-Object { $_.'License' -eq 'No License' } | Set-Style -Style Warning -Property 'License'
@@ -448,25 +451,28 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #region Licensing Features
                                 Section -Style Heading4 -ExcludeFromTOC 'Features' {
                                     $NtnxLicenseAllowanceMap = $NtnxLicense.allowanceMap
-                                    foreach ($NtnxLicenseType in $NtnxLicenseAllowanceMap[0].PSObject.Properties) {
-                                        Set-Variable -Name ('__{0}' -f $NtnxLicenseType.Name) -Value ($NtnxLicenseAllowanceMap | Select-Object -ExpandProperty $($NtnxLicenseType.Name))
-                                    }
 
-                                    $NtnxLicenseValues = Get-Variable -Name '__*'
-                                    $LicensingFeatures = foreach ($NtnxLicenseValue in $NtnxLicenseValues.value) {
-                                        [PSCustomObject]@{
-                                            'Feature' = $NtnxLicenseValue.displayname
-                                            'Permitted' = Switch ($NtnxLicenseValue.allowancesType) {
-                                                'BOOLEAN' {
-                                                    Switch ($NtnxLicenseValue.BoolValue.BoolValue) {
-                                                        $true { 'Yes' }
-                                                        $false { 'No' }
+                                    $LicensingFeatures = @()
+
+                                    $LicensingFeatures += & {
+                                        foreach ($NtnxLicenseValue in $NtnxLicenseAllowanceMap[0].PSObject.Properties) {
+                                            [PSCustomObject]@{
+                                                'Feature' = $NtnxLicenseValue.Value.displayname
+                                                'Permitted' = Switch ($NtnxLicenseValue.Value.allowancesType) {
+                                                    'BOOLEAN' {
+                                                        Switch ($NtnxLicenseValue.Value.BoolValue.BoolValue) {
+                                                            $true { 'Yes' }
+                                                            $false { 'No' }
+                                                        }
                                                     }
+                                                    'INTEGER_LIST' { ($NtnxLicenseValue.Value.intValues).intValue }
                                                 }
-                                                'INTEGER_LIST' { ($NtnxLicenseValue.intValues).intValue }
                                             }
                                         }
                                     }
+
+                                    # $NtnxLicenseValues = Get-Variable -Name '__*'
+
                                     $TableParams = @{
                                         Name = "Licensing Features - $($NtnxCluster.Name)"
                                         ColumnWidths = 50, 50
@@ -488,16 +494,16 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                             #region Health Checks Summary Information
                             if ($InfoLevel.System -lt 4) {
                                 $HealthChecks = [PSCustomObject]@{
-                                        'All Checks' = $NtnxHealthChecks.Count
-                                        #'Passed' = ''
-                                        #'Failed' = ''
-                                        #'Warning' = ''
-                                        #'Error' = ''
-                                        #'Off' = ''
-                                        'Scheduled' = ($NtnxHealthChecks | Where-Object {$_.check_type -eq 'scheduled'}).Count
-                                        'Not Scheduled' = ($NtnxHealthChecks | Where-Object {$_.check_type -eq 'not_scheduled'}).Count
-                                        'Event Triggered' = ($NtnxHealthChecks | Where-Object {$_.check_type -eq 'event_driven'}).Count
-                                    }
+                                    'All Checks' = $NtnxHealthChecks.Count
+                                    #'Passed' = ''
+                                    #'Failed' = ''
+                                    #'Warning' = ''
+                                    #'Error' = ''
+                                    #'Off' = ''
+                                    'Scheduled' = ($NtnxHealthChecks | Where-Object { $_.check_type -eq 'scheduled' }).Count
+                                    'Not Scheduled' = ($NtnxHealthChecks | Where-Object { $_.check_type -eq 'not_scheduled' }).Count
+                                    'Event Triggered' = ($NtnxHealthChecks | Where-Object { $_.check_type -eq 'event_driven' }).Count
+                                }
                                 $TableParams = @{
                                     Name = "Health Checks - $($NtnxCluster.Name)"
                                     ColumnWidths = 25, 25, 25, 25
@@ -560,8 +566,8 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                     if ($InfoLevel.Hosts -eq 1) {
                         Section -Style Heading3 'Hardware Summary' {
                             $NtnxHostSummary = [PSCustomObject]@{
-                                'Hosts' = ($NtnxHosts | Where-Object { $_.Serial | Select-Object -Unique }).Count
-                                'Blocks' = ($NtnxHosts | Where-Object { $_.Block_Serial | Select-Object -Unique }).Count
+                                'Total Hosts' = ($NtnxHosts.Serial | Select-Object -Unique).Count
+                                'Total Blocks' = ($NtnxHosts.Block_Serial | Select-Object -Unique).Count
                                 'Total CPU GHz' = [math]::Round(($NtnxHosts | Measure-Object -Property 'cpu_capacity_in_hz' -Sum).Sum / 1000000000, 1)
                                 'Total Memory GiB' = [math]::Round(($NtnxHosts | Measure-Object -Property 'memory_capacity_in_bytes' -Sum).Sum / 1073741824, 2)
                                 #ToDo: Total # Disks (SSD/HDD)
@@ -589,7 +595,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 Section -Style Heading4 'Hardware' {
                                     $NtnxHostConfig = [PSCustomObject]@{
                                         'Host Name' = $NtnxHost.name
-                                        'Host Type' = $TextInfo.ToTitleCase(($NtnxHost.host_type).ToLower()).Replace("_"," ")
+                                        'Host Type' = $TextInfo.ToTitleCase(($NtnxHost.host_type).ToLower()).Replace("_", " ")
                                         'Node Serial' = $NtnxHost.serial
                                         'Block Serial' = $NtnxHost.block_serial
                                         'Block Model' = $NtnxHost.block_model_name
@@ -1064,7 +1070,7 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 $VirtualMachines | Table @TableParams
 
                                 #region VM Virtual Disks
-                                $NtnxVMVirtualDisks = $NtnxVirtualDisks | Where-Object {$_.attachedVMName -eq $($NtnxVM.vmName)} | Sort-Object diskAddress
+                                $NtnxVMVirtualDisks = $NtnxVirtualDisks | Where-Object { $_.attachedVMName -eq $($NtnxVM.vmName) } | Sort-Object diskAddress
                                 if ($NtnxVMVirtualDisks) {
                                     Section -Style Heading4 -ExcludeFromTOC 'Virtual Disks' {
                                         $VMVirtualDisks = foreach ($NtnxVMVirtualDisk in $NtnxVMVirtualDisks) {
@@ -1138,11 +1144,11 @@ function Invoke-AsBuiltReport.Nutanix.PrismElement {
                                 #endregion VM NICs
 
                                 #region VM Snapshots
-                                $NtnxVMSnapshots = $NtnxSnapshots | Where-Object {$_.vm_uuid -eq $NtnxVM.uuid}
+                                $NtnxVMSnapshots = $NtnxSnapshots | Where-Object { $_.vm_uuid -eq $NtnxVM.uuid }
                                 if ($NtnxVMSnapshots) {
                                     Section -Style Heading3 'VM Snapshots' {
                                         $VMSnapshots = foreach ($NtnxVMSnapshot in $NtnxVMSnapshots) {
-                                            $NtnxVMSnapshotTime = $NtnxVMSnapshot.created_time/1000
+                                            $NtnxVMSnapshotTime = $NtnxVMSnapshot.created_time / 1000
                                             $NtnxVMSnapshotDateTime = (Get-Date '1/1/1970').AddMilliseconds($NtnxVMSnapshotTime)
                                             [PSCustomObject]@{
                                                 'Create Time' = $NtnxVMSnapshotDateTime

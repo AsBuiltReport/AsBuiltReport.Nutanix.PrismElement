@@ -1,8 +1,16 @@
 @{
     ExcludeRules = @(
-        'PSUseToExportFieldsInManifest',
-        'PSReviewUnusedParameter',
-        'PSUseDeclaredVarsMoreThanAssignments',
-        'PSAvoidGlobalVars'
+        'PSUseToExportFieldsInManifest'
     )
+    Rules = @{
+        PSAvoidExclaimOperator = @{
+            Enable = $true
+        }
+        AvoidUsingDoubleQuotesForConstantString = @{
+            Enable = $true
+        }
+        UseCorrectCasing = @{
+            Enable = $true
+        }
+    }
 }

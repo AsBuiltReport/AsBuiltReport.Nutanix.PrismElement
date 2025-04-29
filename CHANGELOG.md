@@ -1,5 +1,17 @@
 # :arrows_clockwise: Nutanix Prism Element As Built Report Changelog
 
+## [1.2.2] Unreleased
+### Added
+- Add CodeQL workflow
+- Add post to Bluesky social platform
+### Fixed
+- Fix SSL error in PWSH v7 (error SYSLIB0014)
+- Fix SNMP section not displaying content
+- Fix License feature section showing blank values
+### Changed
+- Increase AsBuiltReport.Core to v1.4.3
+- Update PSScriptAnalyzer settings
+
 ## [1.2.1] 2022-07-07
 ### Fixed
 - Fixed license reporting in AOS 6.x

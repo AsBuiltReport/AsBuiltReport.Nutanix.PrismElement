@@ -48,9 +48,9 @@ The Nutanix Prism Element As Built Report supports the following AOS versions;
 ### **PowerShell**
 This report is compatible with the following PowerShell versions;
 
-| Windows PowerShell 5.1 | PowerShell 7 |
-|:----------------------:|:------------:|
-|   :white_check_mark:   |  :white_check_mark:  |
+| Windows PowerShell 5.1 |    PowerShell 7    |
+| :--------------------: | :----------------: |
+|   :white_check_mark:   | :white_check_mark: |
 
 ## :wrench: System Requirements
 
@@ -59,9 +59,9 @@ Each of the following modules will be automatically installed by following the [
 These modules may also be manually installed.
 
 | Module Name        | Minimum Required Version |                              PS Gallery                               |                                   GitHub                                    |
-|--------------------|:------------------------:|:---------------------------------------------------------------------:|:---------------------------------------------------------------------------:|
-| PScribo            |          0.10.0           |      [Link](https://www.powershellgallery.com/packages/PScribo)       |         [Link](https://github.com/iainbrighton/PScribo/tree/master)         |
-| AsBuiltReport.Core |          1.2.0           | [Link](https://www.powershellgallery.com/packages/AsBuiltReport.Core) | [Link](https://github.com/AsBuiltReport/AsBuiltReport.Core/releases/latest) |
+| ------------------ | :----------------------: | :-------------------------------------------------------------------: | :-------------------------------------------------------------------------: |
+| PScribo            |          0.11.1          |      [Link](https://www.powershellgallery.com/packages/PScribo)       |         [Link](https://github.com/iainbrighton/PScribo/tree/master)         |
+| AsBuiltReport.Core |          1.4.3           | [Link](https://www.powershellgallery.com/packages/AsBuiltReport.Core) | [Link](https://github.com/AsBuiltReport/AsBuiltReport.Core/releases/latest) |
 
 ### :closed_lock_with_key: Required Privileges
 A user with Prism `Cluster Admin` privileges is required to generate a Nutanix Prism Element As Built Report.
@@ -107,7 +107,7 @@ The **Report** schema provides configuration of the Nutanix Prism report informa
 
 
 | Sub-Schema         | Setting      | Default                               | Description                                                  |
-|--------------------|--------------|---------------------------------------|--------------------------------------------------------------|
+| ------------------ | ------------ | ------------------------------------- | ------------------------------------------------------------ |
 | Name               | User defined | Nutanix Prism Element As Built Report | The name of the As Built Report                              |
 | Version            | User defined | 1.0                                   | The report version                                           |
 | Status             | User defined | Released                              | The report release status                                    |
@@ -126,7 +126,7 @@ The **InfoLevel** schema allows configuration of each section of the report at a
 There are 4 levels (0-3) of detail granularity for each section as follows;
 
 | Setting | InfoLevel         | Description                                                                                                                        |
-|:-------:|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| :-----: | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 |    0    | Disabled          | Does not collect or display any information                                                                                        |
 |    1    | Enabled / Summary | Provides summarised information for a collection of objects                                                                        |
 |    2    | Detailed          | Provides detailed information for a collection of objects                                                                          |
@@ -136,7 +136,7 @@ There are 4 levels (0-3) of detail granularity for each section as follows;
 The table below outlines the default and maximum **InfoLevel** settings for each section.
 
 | Sub-Schema     | Default Setting | Maximum Setting |
-|----------------|:---------------:|:---------------:|
+| -------------- | :-------------: | :-------------: |
 | Cluster        |        1        |        1        |
 | System         |        2        |        4        |
 | Hosts          |        2        |        3        |
@@ -150,40 +150,40 @@ The **Healthcheck** schema is used to toggle health checks on or off.
 #### Cluster
 The **Cluster** schema is used to configure health checks for the Nutanix cluster.
 
-| Sub-Schema      | Setting      | Default | Description                                              | Highlight                                                                                                                                                                                 |
-|-----------------|--------------|---------|----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Timezone        | true/false   | false   | Enables/Disables the timezone setting health check       |                                                                                                                                                                                           |
-| TimezoneSetting | User Defined | UTC     | Checks the configured timezone for the Nutanix cluster   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Not compliant with user defined setting                                                                                          |
+| Sub-Schema      | Setting      | Default | Description                                              | Highlight                                                                                                                                                                                         |
+| --------------- | ------------ | ------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Timezone        | true/false   | false   | Enables/Disables the timezone setting health check       |                                                                                                                                                                                                   |
+| TimezoneSetting | User Defined | UTC     | Checks the configured timezone for the Nutanix cluster   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Not compliant with user defined setting                                                                                              |
 | DataResiliency  | true/false   | true    | Checks the data resiliency status of the Nutanix cluster | ![OK](https://via.placeholder.com/15/36D068/36D068.png) Data relisency status is possible <br>![Critical](https://via.placeholder.com/15/F55656/F55656.png) Data relisency status is not possible |
 
 #### CVM
 The **CVM** schema is used to configure health checks for the Nutanix Controller Virtual Machine (CVM).
 
-| Sub-Schema | Setting    | Default | Description                          | Highlight                                                                   |
-|------------|------------|---------|--------------------------------------|-----------------------------------------------------------------------------|
+| Sub-Schema | Setting    | Default | Description                          | Highlight                                                                       |
+| ---------- | ---------- | ------- | ------------------------------------ | ------------------------------------------------------------------------------- |
 | PowerState | true/false | true    | Highlights if the CVM is powered off | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) CVM is powered off |
 
 #### System
 The **System** schema is used to configure health checks for the entire system.
 
-| Sub-Schema | Setting    | Default | Description                                        | Highlight                                                                                     |
-|------------|------------|---------|----------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Sub-Schema | Setting    | Default | Description                                        | Highlight                                                                                         |
+| ---------- | ---------- | ------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | ImageState | true/false | false   | Highlights images which are in an inactive state   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Image is in an inactive state        |
 | Licensing  | true/false | true    | Highlights if no license is applied to the cluster | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) No license is applied to the cluster |
 
 #### Hardware
 The **Hardware** schema is used to configure health checks for Nutanix hardware.
 
-| Sub-Schema | Setting    | Default | Description                                       | Highlight                                                                           |
-|------------|------------|---------|---------------------------------------------------|-------------------------------------------------------------------------------------|
+| Sub-Schema | Setting    | Default | Description                                       | Highlight                                                                               |
+| ---------- | ---------- | ------- | ------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | DiskStatus | true/false | true    | Highlights disks where their status is not normal | ![Critical](https://via.placeholder.com/15/F55656/F55656.png) Disk status is not normal |
 | DiskMode   | true/false | true    | Highlights disks which are offline                | ![Critical](https://via.placeholder.com/15/F55656/F55656.png) Disk mode is offline      |
 
 #### Storage
 The **Storage** schema is used to configure health checks for Nutanix storage containers.
 
-| Sub-Schema     | Setting    | Default | Description                                                                    | Highlight                                                                                   |
-|----------------|------------|---------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| Sub-Schema     | Setting    | Default | Description                                                                    | Highlight                                                                                       |
+| -------------- | ---------- | ------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Compression    | true/false | false   | Highlights storage containers which do not have compression enabled            | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Compression is disabled            |
 | CacheDedupe    | true/false | false   | Highlights storage containers which do not have cache deduplication enabled    | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Cache deduplication is disabled    |
 | CapacityDedupe | true/false | false   | Highlights storage containers which do not have capacity deduplication enabled | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Capacity deduplication is disabled |
@@ -192,16 +192,16 @@ The **Storage** schema is used to configure health checks for Nutanix storage co
 #### VM
 The **VM** schema is used to configure health checks for virtual machines.
 
-| Sub-Schema         | Setting    | Default | Description                               | Highlight                                                                       |
-|--------------------|------------|---------|-------------------------------------------|---------------------------------------------------------------------------------|
+| Sub-Schema         | Setting    | Default | Description                               | Highlight                                                                           |
+| ------------------ | ---------- | ------- | ----------------------------------------- | ----------------------------------------------------------------------------------- |
 | PowerState         | true/false | true    | Highlights VMs which are powered off      | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) VM is powered off      |
 | NicConnectionState | true/false | true    | Highlights VM NICs which are disconnected | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) VM NIC is disconnected |
 
 #### DataProtection
 The **DataProtection** schema is used to configure health checks for Nutanix data protection.
 
-| Sub-Schema          | Setting    | Default | Description                                    | Highlight                                                                                 |
-|---------------------|------------|---------|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| Sub-Schema          | Setting    | Default | Description                                    | Highlight                                                                                     |
+| ------------------- | ---------- | ------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | CompressOnWire      | true/false | false   | Highlights if line compression is disabled     | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Line compression is disabled     |
 | BandwidthThrottling | true/false | false   | Highlights if bandwidth throttling is disabled | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Bandwidth throttling is disabled |
 | Proxy               | true/false | false   | Highlights if proxy setting is disabled        | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Proxy setting is disabled        |

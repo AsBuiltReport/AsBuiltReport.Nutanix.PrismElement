@@ -16,7 +16,7 @@ function Get-NtnxApi {
     )
 
     Begin {
-        #region Workaround for SelfSigned Cert an force TLS 1.2
+        #region Workaround for SelfSigned Cert and force TLS 1.2
 
         if ($PSVersionTable.PSEdition -ne 'Core') {
 
@@ -38,13 +38,14 @@ function Get-NtnxApi {
 
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
         [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-        #endregion Workaround for SelfSigned Cert an force TLS 1.2
+        #endregion Workaround for SelfSigned Cert and force TLS 1.2
 
         $username = $Credential.UserName
         $password = $Credential.GetNetworkCredential().Password
         $auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($username + ":" + $password ))
         $api_v1 = "https://" + $NtnxPE + ":9440/PrismGateway/services/rest/v1"
         $api_v2 = "https://" + $NtnxPE + ":9440/PrismGateway/services/rest/v2.0"
+        #$api_v2 = "https://" + $NtnxPE + ":9440/api/nutanix/v2.0" # New API endpoint as of AOS 6.0
         $headers = @{
             'Accept' = 'application/json'
             'Authorization' = "Basic $auth"
@@ -54,6 +55,7 @@ function Get-NtnxApi {
 
     Process {
         Try {
+            Write-PScriboMessage -Message "Performing API reference call to $(($URI).TrimStart('/')) [$NtnxPE]"
             # Check PowerShell version
             if ($PSVersionTable.PSVersion.Major -eq "7") {
                 Switch ($Version) {
@@ -69,7 +71,7 @@ function Get-NtnxApi {
                 Throw
             }
         } Catch {
-            Write-Verbose -Message "Error with API reference call to $(($URI).TrimStart('/'))"
+            Write-Verbose -Message "Error with API reference call to $(($URI).TrimStart('/')) [$NtnxPE]"
             Write-Verbose -Message $_
         }
     }

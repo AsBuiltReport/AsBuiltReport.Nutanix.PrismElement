@@ -3,17 +3,16 @@ description: Request a new change or an improvement
 title: "[Change Request]: "
 labels: ["change request"]
 assignees:
-  - rebelinux
+  - tpcarman
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this enahancement form :)
+        Thanks for taking the time to fill out this change request form :)
         - Kindly **DO NOT** ask for instructions.
         - Use [Discussions](https://github.com/orgs/AsBuiltReport/discussions) section if you have a query or doubts or any other relevant question.
-        - You may join [Slack community](https://the-code-community.slack.com#asbuiltreport) to interact with fellow contributors and users
-        - Read project's [Web Site](https://www.asbuiltreport.com/user-guide/installation/) for detailed documentation.
-        - Read project's [FAQs](https://www.asbuiltreport.com/support/faq/) section for Frequently asked questions.
+        - Read the project [Web Site](https://www.asbuiltreport.com/user-guide/installation/) for detailed documentation.
+        - Read the project [FAQs](https://www.asbuiltreport.com/support/faq/) section for frequently asked questions.
         - Search for previous [Issues](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/issues)/[Pull Requests](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/pulls) if this issue is already reported or fix has been created.
   - type: textarea
     id: description

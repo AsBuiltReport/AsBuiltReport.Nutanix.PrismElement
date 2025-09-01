@@ -38,7 +38,7 @@ function Get-AbrNtnxStorage {
                             Section -Style Heading3 'Containers' {
                                 $Containers = foreach ($NtnxContainer in $NtnxContainers) {
                                     [PSCustomObject]@{
-                                        'Name' = $NtnxContainer.name
+                                        'Container' = $NtnxContainer.name
                                         'Replication Factor' = "RF $($NtnxContainer.replication_factor)"
                                         #ToDo: 'Protection Domain'
                                         #ToDo: 'Datastore'

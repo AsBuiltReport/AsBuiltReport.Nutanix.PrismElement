@@ -1,14 +1,14 @@
 <p align="center">
-    <a href="https://www.asbuiltreport.com/" alt="AsBuiltReport"></a>
-            <img src='https://github.com/AsBuiltReport.png' width="8%" height="8%" /></a>
+    <a href="https://www.asbuiltreport.com/">
+        <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/repo-banners/AsBuiltReport.Nutanix.PrismElement.png" alt="AsBuiltReport.Nutanix.PrismElement" width="880"></a>
 </p>
 <p align="center">
     <a href="https://www.powershellgallery.com/packages/AsBuiltReport.Nutanix.PrismElement/" alt="PowerShell Gallery Version">
-        <img src="https://img.shields.io/powershellgallery/v/AsBuiltReport.Nutanix.PrismElement.svg" /></a>
+        <img src="https://img.shields.io/powershellgallery/v/AsBuiltReport.Nutanix.PrismElement.svg?color=1F5FD0" /></a>
     <a href="https://www.powershellgallery.com/packages/AsBuiltReport.Nutanix.PrismElement/" alt="PS Gallery Downloads">
-        <img src="https://img.shields.io/powershellgallery/dt/AsBuiltReport.Nutanix.PrismElement.svg" /></a>
+        <img src="https://img.shields.io/powershellgallery/dt/AsBuiltReport.Nutanix.PrismElement.svg?color=012456" /></a>
     <a href="https://www.powershellgallery.com/packages/AsBuiltReport.Nutanix.PrismElement/" alt="PS Platform">
-        <img src="https://img.shields.io/powershellgallery/p/AsBuiltReport.Nutanix.PrismElement.svg" /></a>
+        <img src="https://img.shields.io/powershellgallery/p/AsBuiltReport.Nutanix.PrismElement.svg?color=FFD02B" /></a>
 </p>
 <p align="center">
     <a href="https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/graphs/commit-activity" alt="GitHub Last Commit">
@@ -16,30 +16,24 @@
     <a href="https://raw.githubusercontent.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/master/LICENSE" alt="GitHub License">
         <img src="https://img.shields.io/github/license/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement.svg" /></a>
     <a href="https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/graphs/contributors" alt="GitHub Contributors">
-        <img src="https://img.shields.io/github/contributors/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement.svg"/></a>
-</p>
-<p align="center">
-    <a href="https://twitter.com/AsBuiltReport" alt="Twitter">
-            <img src="https://img.shields.io/twitter/follow/AsBuiltReport.svg?style=social"/></a>
+        <img src="https://img.shields.io/github/contributors/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement.svg?color=012456"/></a>
 </p>
 
 <p align="center">
     <a href='https://ko-fi.com/B0B7DDGZ7' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 </p>
 
-# Nutanix Prism Element As Built Report
-
-## :books: Sample Reports
+## <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/sample-reports.svg" alt="" width="24" height="24" align="top"> Sample Reports
 ### Sample Report - Default Style
 Sample Nutanix Prism Element As Built Report with health checks, using default report style.
 
 ![Sample Nutanix Prism Element As Built Report](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample%20Nutanix%20Prism%20Element%20As%20Built%20Report.jpg "Sample Nutanix Prism Element As Built Report")
 
 Sample Nutanix Prism Element As Built Report HTML file: [Sample Nutanix Prism Element As Built Report.html](https://htmlpreview.github.io/?https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement/blob/master/Samples/Sample%20Nutanix%20Prism%20Element%20As%20Built%20Report.html "Sample Nutanix Prism Element As Built Report")
-# :beginner: Getting Started
+# <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/getting-started.svg" alt="" width="28" height="28" align="top"> Getting Started
 Below are the instructions on how to install, configure and generate a Nutanix Prism As Built report.
 
-## :floppy_disk: Supported Versions
+## <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/supported-versions.svg" alt="" width="24" height="24" align="top"> Supported Versions
 ### **Prism / AOS**
 The Nutanix Prism Element As Built Report supports the following AOS versions;
 - AOS 5.x
@@ -52,7 +46,7 @@ This report is compatible with the following PowerShell versions;
 | :--------------------: | :----------------: |
 |   :white_check_mark:   | :white_check_mark: |
 
-## :wrench: System Requirements
+## <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/system-requirements.svg" alt="" width="24" height="24" align="top"> System Requirements
 
 Each of the following modules will be automatically installed by following the [module installation](https://github.com/AsBuiltReport/AsBuiltReport.Nutanix.PrismElement#package-module-installation) procedure.
 
@@ -63,10 +57,10 @@ These modules may also be manually installed.
 | PScribo            |          0.11.1          |      [Link](https://www.powershellgallery.com/packages/PScribo)       |         [Link](https://github.com/iainbrighton/PScribo/tree/master)         |
 | AsBuiltReport.Core |          1.4.3           | [Link](https://www.powershellgallery.com/packages/AsBuiltReport.Core) | [Link](https://github.com/AsBuiltReport/AsBuiltReport.Core/releases/latest) |
 
-### :closed_lock_with_key: Required Privileges
+### <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/required-privileges.svg" alt="" width="20" height="20" align="top"> Required Privileges
 A user with Prism `Cluster Admin` privileges is required to generate a Nutanix Prism Element As Built Report.
 
-## :package: Module Installation
+## <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/module-installation.svg" alt="" width="24" height="24" align="top"> Module Installation
 
 ### **PowerShell**
 Open a PowerShell terminal window and install the required modules as follows;
@@ -88,7 +82,7 @@ If you are unable to use the PowerShell Gallery, you can still install the modul
 
 _Note: You are not limited to installing the module to those example paths, you can add a new entry to the environment variable PSModulePath if you want to use another path._
 
-## :pencil2: Configuration
+## <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/configuration.svg" alt="" width="24" height="24" align="top"> Configuration
 The Nutanix Prism As Built Report utilises a JSON file to allow configuration of report information, options, detail and healthchecks.
 
 A Nutanix Prism report configuration file can be generated by executing the following command;
@@ -153,60 +147,60 @@ The **Cluster** schema is used to configure health checks for the Nutanix cluste
 | Sub-Schema      | Setting      | Default | Description                                              | Highlight                                                                                                                                                                                         |
 | --------------- | ------------ | ------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Timezone        | true/false   | false   | Enables/Disables the timezone setting health check       |                                                                                                                                                                                                   |
-| TimezoneSetting | User Defined | UTC     | Checks the configured timezone for the Nutanix cluster   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Not compliant with user defined setting                                                                                              |
-| DataResiliency  | true/false   | true    | Checks the data resiliency status of the Nutanix cluster | ![OK](https://via.placeholder.com/15/36D068/36D068.png) Data relisency status is possible <br>![Critical](https://via.placeholder.com/15/F55656/F55656.png) Data relisency status is not possible |
+| TimezoneSetting | User Defined | UTC     | Checks the configured timezone for the Nutanix cluster   | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Not compliant with user defined setting                                                                                              |
+| DataResiliency  | true/false   | true    | Checks the data resiliency status of the Nutanix cluster | ![OK](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/36D068.svg) Data relisency status is possible <br>![Critical](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/F55656.svg) Data relisency status is not possible |
 
 #### CVM
 The **CVM** schema is used to configure health checks for the Nutanix Controller Virtual Machine (CVM).
 
 | Sub-Schema | Setting    | Default | Description                          | Highlight                                                                       |
 | ---------- | ---------- | ------- | ------------------------------------ | ------------------------------------------------------------------------------- |
-| PowerState | true/false | true    | Highlights if the CVM is powered off | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) CVM is powered off |
+| PowerState | true/false | true    | Highlights if the CVM is powered off | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) CVM is powered off |
 
 #### System
 The **System** schema is used to configure health checks for the entire system.
 
 | Sub-Schema | Setting    | Default | Description                                        | Highlight                                                                                         |
 | ---------- | ---------- | ------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| ImageState | true/false | false   | Highlights images which are in an inactive state   | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Image is in an inactive state        |
-| Licensing  | true/false | true    | Highlights if no license is applied to the cluster | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) No license is applied to the cluster |
+| ImageState | true/false | false   | Highlights images which are in an inactive state   | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Image is in an inactive state        |
+| Licensing  | true/false | true    | Highlights if no license is applied to the cluster | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) No license is applied to the cluster |
 
 #### Hardware
 The **Hardware** schema is used to configure health checks for Nutanix hardware.
 
 | Sub-Schema | Setting    | Default | Description                                       | Highlight                                                                               |
 | ---------- | ---------- | ------- | ------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| DiskStatus | true/false | true    | Highlights disks where their status is not normal | ![Critical](https://via.placeholder.com/15/F55656/F55656.png) Disk status is not normal |
-| DiskMode   | true/false | true    | Highlights disks which are offline                | ![Critical](https://via.placeholder.com/15/F55656/F55656.png) Disk mode is offline      |
+| DiskStatus | true/false | true    | Highlights disks where their status is not normal | ![Critical](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/F55656.svg) Disk status is not normal |
+| DiskMode   | true/false | true    | Highlights disks which are offline                | ![Critical](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/F55656.svg) Disk mode is offline      |
 
 #### Storage
 The **Storage** schema is used to configure health checks for Nutanix storage containers.
 
 | Sub-Schema     | Setting    | Default | Description                                                                    | Highlight                                                                                       |
 | -------------- | ---------- | ------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Compression    | true/false | false   | Highlights storage containers which do not have compression enabled            | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Compression is disabled            |
-| CacheDedupe    | true/false | false   | Highlights storage containers which do not have cache deduplication enabled    | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Cache deduplication is disabled    |
-| CapacityDedupe | true/false | false   | Highlights storage containers which do not have capacity deduplication enabled | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Capacity deduplication is disabled |
-| ErasureCoding  | true/false | false   | Highlights storage containers which do not have erasure coding enabled         | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Erasure coding is disabled         |
+| Compression    | true/false | false   | Highlights storage containers which do not have compression enabled            | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Compression is disabled            |
+| CacheDedupe    | true/false | false   | Highlights storage containers which do not have cache deduplication enabled    | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Cache deduplication is disabled    |
+| CapacityDedupe | true/false | false   | Highlights storage containers which do not have capacity deduplication enabled | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Capacity deduplication is disabled |
+| ErasureCoding  | true/false | false   | Highlights storage containers which do not have erasure coding enabled         | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Erasure coding is disabled         |
 
 #### VM
 The **VM** schema is used to configure health checks for virtual machines.
 
 | Sub-Schema         | Setting    | Default | Description                               | Highlight                                                                           |
 | ------------------ | ---------- | ------- | ----------------------------------------- | ----------------------------------------------------------------------------------- |
-| PowerState         | true/false | true    | Highlights VMs which are powered off      | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) VM is powered off      |
-| NicConnectionState | true/false | true    | Highlights VM NICs which are disconnected | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) VM NIC is disconnected |
+| PowerState         | true/false | true    | Highlights VMs which are powered off      | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) VM is powered off      |
+| NicConnectionState | true/false | true    | Highlights VM NICs which are disconnected | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) VM NIC is disconnected |
 
 #### DataProtection
 The **DataProtection** schema is used to configure health checks for Nutanix data protection.
 
 | Sub-Schema          | Setting    | Default | Description                                    | Highlight                                                                                     |
 | ------------------- | ---------- | ------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| CompressOnWire      | true/false | false   | Highlights if line compression is disabled     | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Line compression is disabled     |
-| BandwidthThrottling | true/false | false   | Highlights if bandwidth throttling is disabled | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Bandwidth throttling is disabled |
-| Proxy               | true/false | false   | Highlights if proxy setting is disabled        | ![Warning](https://via.placeholder.com/15/FFBC0B/FFBC0B.png) Proxy setting is disabled        |
+| CompressOnWire      | true/false | false   | Highlights if line compression is disabled     | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Line compression is disabled     |
+| BandwidthThrottling | true/false | false   | Highlights if bandwidth throttling is disabled | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Bandwidth throttling is disabled |
+| Proxy               | true/false | false   | Highlights if proxy setting is disabled        | ![Warning](https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/highlight-swatches/FFBC0B.svg) Proxy setting is disabled        |
 
-## :computer: Examples
+## <img src="https://raw.githubusercontent.com/AsBuiltReport/.github/main/assets/section-icons/examples.svg" alt="" width="24" height="24" align="top"> Examples
 
 ```powershell
 # Generate a Nutanix Prism Element As Built Report for Nutanix cluster '172.16.30.110' using specified credentials. Export report to HTML & DOCX formats. Use default report style. Append timestamp to report filename. Save reports to 'C:\Users\Tim\Documents'
